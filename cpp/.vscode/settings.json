@@ -1,0 +1,93 @@
+{
+  /// ======================
+  //       Терминал
+  // ======================
+
+  "terminal.integrated.cwd": "${workspaceFolder}",
+
+  /// ======================
+  //   EDITOR SETTINGS
+  // ======================
+ 
+  "editor.formatOnSave": false,
+
+  "editor.defaultFormatter": "ms-vscode.cpptools",
+
+  "C_Cpp.clang_format_style": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 120 }",
+
+  "files.encoding": "utf8",
+  // Количество пробелов для отступа
+  "editor.tabSize": 4,
+  // Использовать пробелы вместо табов
+  "editor.insertSpaces": true,
+  // Не определять автоматически размер отступов, использовать фиксированный
+  "editor.detectIndentation": false,
+
+  // --- C/C++ подсказки ---
+  // Показывать подчёркивания ошибок (синтаксис, типы и т.д.)
+  "C_Cpp.errorSquiggles": "enabled",
+  // Тип движка анализа кода:
+  // "Default" — стандартный, стабильный вариант;
+  // "Tag Parser" — упрощённый, работает быстрее, но без "умного" анализа.
+  "C_Cpp.intelliSenseEngine": "Default",
+
+
+  // ==============================
+  //  ИНТЕГРАЦИЯ С CMAKE TOOLS
+  // ==============================
+  
+  // Автоконфигурация при открытии проекта — CMake Tools выполнит configure.
+  // При открытии проекта, CMake Tools автоматически выполнит:
+  // cmake -S . -B build
+  // и создаст конфигурацию сборки (без make).
+  // Если в проекте уже есть каталог build, он просто используется.
+  "cmake.configureOnOpen": true,
+
+  // CMake может генерировать разные типы build-систем: Makefiles, Ninja, Visual Studio, и т.п.
+  "cmake.generator": "Unix Makefiles",
+
+  // аналог опции CLI -B build-debug.
+  "cmake.buildDirectory": "${workspaceFolder}/build-debug",
+
+  "cmake.configureArgs": [
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+    "-DCMAKE_BUILD_TYPE=Debug"
+  ],
+  "cmake.buildArgs": [
+    "-j3"
+  ],
+
+  "cmake.sourceDirectory": "${workspaceFolder}",
+  
+  // Расширение CMake Tools или C/C++ может этот файл подхватить, если конфигрурация ручная
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build-debug/compile_commands.json",
+
+  // настройки от CMake Tools
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+
+  // Автосборка проекта при запуске (F5)
+  // Эквивалент cmake --build build-debug
+  "cmake.buildBeforeRun": true,
+
+  // ============================
+  //  ПРОЧИЕ ПАРАМЕТРЫ
+  // ============================
+
+  // ширина линии
+  "editor.rulers": [120],
+  // выделение скобок
+  "editor.bracketPairColorization.enabled": true,
+
+  // ============================
+  //  Code-runner
+  // ============================
+
+  "code-runner.executorMap": {
+      "cpp": "cd $workspaceFolder/build-debug && make -j3",
+      "c": "cd $workspaceFolder/build-debug && make -j3",
+      "cmake": "cmake -S $workspaceFolder -B $workspaceFolder/build-debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug",
+      "python": "python3 -u",
+      "bash": "bash"
+  }
+
+}

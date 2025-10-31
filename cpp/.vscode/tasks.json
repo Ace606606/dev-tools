@@ -1,0 +1,116 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        /// ======================
+        //  CMAKE: CONFIGURE (DEBUG)
+        // ======================
+        {
+            "label": "CMake: Configure (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S", "${workspaceFolder}",
+                "-B", "${workspaceFolder}/build-debug",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [],
+            "detail": "Конфигурирует проект под Debug (создаёт build-debug)"
+        },
+
+        /// ======================
+        //  CMAKE: CONFIGURE (RELEASE)
+        // ======================
+        {
+            "label": "CMake: Configure (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S", "${workspaceFolder}",
+                "-B", "${workspaceFolder}/build-release",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Конфигурирует проект под Release (создаёт build-release)"
+        },
+
+        /// ======================
+        //  CMAKE: BUILD (DEBUG)
+        // ======================
+        {
+            "label": "CMake: Build (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", "${workspaceFolder}/build-debug",
+                "--parallel", "3"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "dependsOn": ["CMake: Configure (Debug)"],
+            "problemMatcher": ["$gcc"],
+            "detail": "Собирает проект из каталога build-debug"
+        },
+
+        /// ======================
+        //  CMAKE: BUILD (RELEASE)
+        // ======================
+        {
+            "label": "CMake: Build (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build", "${workspaceFolder}/build-release",
+                "--parallel", "3"
+            ],
+            "group": "build",
+            "dependsOn": ["CMake: Configure (Release)"],
+            "problemMatcher": ["$gcc"],
+            "detail": "Собирает проект из каталога build-release"
+        },
+
+        /// ======================
+        //  RUN (DEBUG)
+        // ======================
+        {
+            "label": "Run (Debug)",
+            "type": "shell",
+            "command": "${workspaceFolder}/build-debug/my_executable",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Запускает скомпилированный бинарник из build-debug без сборки"
+        },
+
+        /// ======================
+        //  RUN (RELEASE)
+        // ======================
+        {
+            "label": "Run (Release)",
+            "type": "shell",
+            "command": "${workspaceFolder}/build-release/my_executable",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Запускает скомпилированный бинарник из build-release без сборки"
+        },
+
+        /// ======================
+        //  CLEAN (все сборки)
+        // ======================
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "rm -rf ${workspaceFolder}/build-debug ${workspaceFolder}/build-release",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Удаляет каталоги сборки build-debug и build-release (если существуют)"
+        }
+    ]
+}
