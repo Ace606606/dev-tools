@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Python: install depends && proto-gen",
+            "type": "shell",
+            // Создать venv, если нет, и установить зависимости
+            //"command": "source .venv/bin/activate && pip install -r requirements.txt",
+            "command": "cd ${workspaceFolder}/dir && make install-depends && make proto-gen", 
+            "group": "build",
+            "problemMatcher": []
+        },
+        //{
+        //    "label": "Run main.py",
+        //    "type": "shell",
+        //    "command": "python3 ${workspaceFolder}/src/main.py",
+        //    "group": {
+        //        "kind": "build",
+        //        "isDefault": true
+        //    },
+        //    "problemMatcher": []
+        //},
+        //{
+        //    // запуск тестов
+        //    "label": "Run tests",
+        //    "type": "shell",
+        //    "command": "pytest -v --disable-warnings tests/",
+        //    "group": "test",
+        //    "problemMatcher": []
+        //}
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug",
+            "type": "python",
+            // Тип запуска (launch = запуск нового процесса, attach = подключение к уже работающему)
+            "request": "launch",
+            //"program": "${workspaceFolder}/src/main.py",
+            "program": "${file}",
+            "args": [
+            //
+            ],
+            // Рабочая директория для скрипта
+            //"cwd": "${workspaceFolder}",
+            "cwd": "${fileDirname}",
+            // (встроенный VSCode)
+            "console": "integratedTerminal",
+            // Не заходить в системные модули при пошаговой отладке
+            "justMyCode": true,
+            //"env": {
+            //    "PYTHONPATH": "${workspaceFolder}/src",
+            //},
+            // Активировать виртуальное окружение
+            //"python": "${workspaceFolder}/.venv/bin/python"
+        },
+    ]
+}
