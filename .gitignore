@@ -1,5 +1,4 @@
-dst/*
-
+scripts/cpp/dst/
 
 # Prerequisites
 *.d
