@@ -29,7 +29,7 @@
   // Тип движка анализа кода:
   // "Default" — стандартный, стабильный вариант;
   // "Tag Parser" — упрощённый, работает быстрее, но без "умного" анализа.
-  "C_Cpp.intelliSenseEngine": "Default",
+  "C_Cpp.intelliSenseEngine": "default",
 
 
   // ==============================
@@ -41,7 +41,12 @@
   // cmake -S . -B build
   // и создаст конфигурацию сборки (без make).
   // Если в проекте уже есть каталог build, он просто используется.
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "cmake.configureOnOpen": true,
+  "cmake.configureOnEdit": true,
+  "cmake.buildBeforeRun": false,
+  "cmake.autoSelectActiveFolder": false,
+  "cmake.loggingLevel": "info",
 
   // CMake может генерировать разные типы build-систем: Makefiles, Ninja, Visual Studio, и т.п.
   "cmake.generator": "Unix Makefiles",
@@ -61,13 +66,6 @@
   
   // Расширение CMake Tools или C/C++ может этот файл подхватить, если конфигрурация ручная
   "C_Cpp.default.compileCommands": "${workspaceFolder}/build-debug/compile_commands.json",
-
-  // настройки от CMake Tools
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-
-  // Автосборка проекта при запуске (F5)
-  // Эквивалент cmake --build build-debug
-  "cmake.buildBeforeRun": true,
 
   // ============================
   //  ПРОЧИЕ ПАРАМЕТРЫ

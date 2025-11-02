@@ -9,7 +9,8 @@
             "type": "cppdbg",
             "request": "launch",
             //"program": "${workspaceFolder}/build-debug/my_executable",
-            "program": "${workspaceFolder}/test",
+            "program": "${command:cmake.launchTargetPath}",
+            //"program": "${workspaceFolder}/build-debug/test",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -22,7 +23,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "CMake: Build (Debug)"
+            //"preLaunchTask": "CMake: Build (Debug)"
         }
     ]
 }
