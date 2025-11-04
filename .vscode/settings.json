@@ -114,7 +114,29 @@
         "json": true
     },
     "cSpell.words": [
+        "cheshirekow",
+        "cpptools",
+        "eamodio",
+        "errorlens",
+        "fndnet",
+        "formulahendry",
+        "graphviz",
+        "grpcio",
         "gruntfuggly",
-        "mkhl"
-    ]
+        "hykin",
+        "libgrpc",
+        "libprotobuf",
+        "libprotoc",
+        "lldb",
+        "Makefiles",
+        "mkhl",
+        "mypy",
+        "oderwat",
+        "pylance",
+        "twxs",
+        "usernamehw",
+        "valgrind",
+        "Werror",
+        "Wextra"
+    ],
 }

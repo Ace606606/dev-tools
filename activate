@@ -1,38 +1,37 @@
 export CONFIG_ROOT="$HOME/dev-tools"
 
-#PRINT_DIRECTORY_STRUCTUR
+#PRINT_DIRECTORY_STRUCTURE
 alias pds="$CONFIG_ROOT/scripts/cpp/dst/print_directory_structure"
 #FIND_NETWORK
 alias fndnet="$CONFIG_ROOT/scripts/bash/find_network/find_network.sh"
 
-
 #VSCODE_CONFIG_MANAGER
 vcm() {
-    case "$1" in
-        cpp)
-            $CONFIG_ROOT/scripts/cpp/dst/vscode_config_manager create $CONFIG_ROOT/configs/cpp/.vscode
-            ;;
-        py)
-            $CONFIG_ROOT/scripts/cpp/dst/vscode_config_manager create $CONFIG_ROOT/configs/py/.vscode
-            ;;
-        *)
-            echo -e "Invalid argument: "$1".\nUse: 'cpp' or 'py'" >&2
-            return 1
-            ;;
-    esac
+	case "$1" in
+	cpp)
+		$CONFIG_ROOT/scripts/cpp/dst/vscode_config_manager create $CONFIG_ROOT/configs/cpp/.vscode
+		;;
+	py)
+		$CONFIG_ROOT/scripts/cpp/dst/vscode_config_manager create $CONFIG_ROOT/configs/py/.vscode
+		;;
+	*)
+		echo -e "Invalid argument: "$1".\nUse: 'cpp' or 'py'" >&2
+		return 1
+		;;
+	esac
 }
 
 info_dev-tools() {
-    printf "\nAvailable commands:\n\n"
+	printf "\nAvailable commands:\n\n"
 
-    printf "  %-20s - %s\n" "vcm <lang>" "VSCode Configuration Manager."
-    printf "                       %s\n" "Accepts one argument: cpp or py."
-    printf "                       %s\n\n" "Creates or updates the .vscode folder for the selected language."
+	printf "  %-20s - %s\n" "vcm <lang>" "VSCode Configuration Manager."
+	printf "                       %s\n" "Accepts one argument: cpp or py."
+	printf "                       %s\n\n" "Creates or updates the .vscode folder for the selected language."
 
-    printf "  %-20s - %s\n" "pds" "Prints the directory tree structure of the current project."
-    printf "                       %s\n\n" "Takes no arguments."
+	printf "  %-20s - %s\n" "pds" "Prints the directory tree structure of the current project."
+	printf "                       %s\n\n" "Takes no arguments."
 
-    printf "  %-20s - %s\n" "fndnet <IP> <MASK>" "Finds the network based on IP and subnet mask."
-    printf "                       %s\n\n" "Example: fndnet 192.168.1.10 255.255.255.0"
+	printf "  %-20s - %s\n" "fndnet <IP> <MASK>" "Finds the network based on IP and subnet mask."
+	printf "                       %s\n\n" "Example: fndnet 192.168.1.10 255.255.255.0"
 
 }
