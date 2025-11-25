@@ -1,3 +1,7 @@
+/// Ctrl + Shift + P (or F1).
+/// Reload Window.
+/// "Developer: Reload Window".
+
 {
     /// ======================
     //       Терминал
@@ -59,7 +63,7 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
     "python.analysis.extraPaths": [
-        "${workspaceFolder}/src" // Если исходники в src/
+        "${workspaceFolder}/" // Если исходники в src/
     ],
     "python.analysis.diagnosticMode": "workspace",
     // 4. Линтинг
