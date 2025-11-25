@@ -1,4 +1,7 @@
-scripts/cpp/dst/
+*/dst/
+*/.venv/
+*/bash/
+*.log
 
 # Prerequisites
 *.d

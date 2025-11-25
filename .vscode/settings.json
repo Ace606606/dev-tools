@@ -138,7 +138,9 @@
         "json": true
     },
     "cSpell.words": [
+        "dylib",
         "gruntfuggly",
-        "mkhl"
+        "mkhl",
+        "smod"
     ]
 }
