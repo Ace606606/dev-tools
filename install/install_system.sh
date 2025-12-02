@@ -14,7 +14,7 @@ apt update && apt install -y \
 	clang clang-format clang-tidy cppcheck \
 	pkg-config make \
 	bash-completion curl wget openssh-client \
-	shfmt valgrind \
+	#shfmt valgrind \
 	libprotobuf-dev libgrpc++-dev libgrpc-dev libprotoc-dev
 
 # python3 -m venv .venv
