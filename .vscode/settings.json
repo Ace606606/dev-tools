@@ -1,12 +1,9 @@
-/// Ctrl + Shift + P (or F1).
-/// Reload Window.
-/// "Developer: Reload Window".
-
 {
     /// ======================
     //       Терминал
     // ======================
     "terminal.integrated.cwd": "${workspaceFolder}",
+
     /// ======================
     //   EDITOR SETTINGS
     // ======================
@@ -16,131 +13,97 @@
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
     "editor.cursorSurroundingLines": 3,
-    "editor.renderWhitespace": "boundary",
+    "editor.renderWhitespace": "all",
     "editor.minimap.enabled": true,
     "editor.minimap.scale": 1,
     "editor.minimap.size": "fit",
     "editor.minimap.maxColumn": 80,
-    "editor.minimap.renderCharacters": true,
+
     // ============================
     //  НАСТРОЙКИ ФОРМАТТЕРОВ ПО ЯЗЫКАМ
     // ============================
     "[cpp]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools",
-        "editor.formatOnSave": false
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        "editor.formatOnSave": true
     },
     "[c]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools",
-        "editor.formatOnSave": false,
-    },
-    "C_Cpp.clang_format_style": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 120 }",
-    "[shellscript]": {
-        "editor.defaultFormatter": "mkhl.shfmt",
-        "editor.formatOnSave": false
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+        "editor.formatOnSave": true
     },
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
-        "editor.formatOnSave": false
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.isort": "explicit"
+        }
+    },
+    "[shellscript]": {
+        "editor.defaultFormatter": "mkhl.shfmt"
     },
     "[yaml]": {
-        "editor.defaultFormatter": "redhat.vscode-yaml",
-        "editor.formatOnSave": false
+        "editor.defaultFormatter": "redhat.vscode-yaml"
     },
     "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features",
-        "editor.formatOnSave": false
+        "editor.defaultFormatter": "vscode.json-language-features"
     },
-    "[xml]": {
-        "editor.defaultFormatter": "redhat.vscode-xml",
-        "editor.formatOnSave": false
-    },
+
+    // ============================
+    //          CLANGD (C++)
+    // ============================
+    "clangd.path": "clangd",
+    "clangd.arguments": [
+        "--background-index",
+        "--clang-tidy",
+        "--header-insertion=never",
+        "--compile-commands-dir=build-debug",
+        "--completion-style=detailed",
+        "--function-arg-placeholders=false"
+    ],
+    "clangd.fallbackFlags": [ "-std=c++20" ],
+
     // ============================
     //          PYTHON
     // ============================
-    // Интерпретатор
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    // Типизация Pylance
-    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.typeCheckingMode": "strict", // В проекте strict, но в редакторе basic удобнее
     "python.analysis.autoImportCompletions": true,
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/" // Если исходники в src/
-    ],
-    "python.analysis.diagnosticMode": "workspace",
-    // 4. Линтинг
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.linting.mypyEnabled": true,
-    // 5. Тестирование
     "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
+    
+    // Привязываем линтеры к конфигу в pyproject.toml
+    "mypy-type-checker.args": ["--config-file=${workspaceFolder}/pyproject.toml"],
+    "flake8.args": ["--config=${workspaceFolder}/pyproject.toml"],
+    "black-formatter.args": ["--config=${workspaceFolder}/pyproject.toml"],
+
     // ============================
-    //          CPP
+    //          CPP (Интеграция)
     // ============================
-    // --- C/C++ подсказки ---
-    "C_Cpp.errorSquiggles": "enabled",
-    // ======== Code Analysis ========
-    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
-    "C_Cpp.codeAnalysis.clangTidy.useBuildPath": true,
-    // Тип движка анализа кода:
-    // "Default" — стандартный, стабильный вариант;
-    // "Tag Parser" — упрощённый, работает быстрее, но без "умного" анализа.
-    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.intelliSenseEngine": "disabled", 
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build-debug/compile_commands.json",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+
     // ==============================
     //  ИНТЕГРАЦИЯ С CMAKE TOOLS
     // ==============================
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "cmake.configureOnOpen": true,
-    "cmake.configureOnEdit": true,
-    "cmake.buildBeforeRun": false,
-    "cmake.autoSelectActiveFolder": false,
-    "cmake.loggingLevel": "info",
-    // Makefiles, Ninja, Visual Studio
-    "cmake.generator": "Unix Makefiles",
     "cmake.buildDirectory": "${workspaceFolder}/build-debug",
     "cmake.configureArgs": [
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
         "-DCMAKE_BUILD_TYPE=Debug"
     ],
-    "cmake.buildArgs": [
-        "-j3"
-    ],
-    "cmake.sourceDirectory": "${workspaceFolder}",
-    "C_Cpp.default.compileCommands": "${workspaceFolder}/build-debug/compile_commands.json",
+    "cmake.generator": "Unix Makefiles",
+
     // ============================
     //  ПРОЧИЕ ПАРАМЕТРЫ
     // ============================
-    "editor.rulers": [
-        120
-    ],
+    "editor.rulers": [79, 120], // 79 Python (Black), 120 C++
     "editor.bracketPairColorization.enabled": true,
-    // ============================
-    //  Code-runner
-    // ============================
+
     "code-runner.executorMap": {
-        "cpp": "cd $workspaceFolder/build-debug && make -j3",
-        "c": "cd $workspaceFolder/build-debug && make -j3",
-        "cmake": "cmake -S $workspaceFolder -B $workspaceFolder/build-debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug",
-        "python": "python3 -u",
-        "bash": "bash"
+        "cpp": "cmake --build $workspaceFolder/build-debug -j$(nproc) && $workspaceFolder/build-debug/$fileNameWithoutExt",
+        "c": "cmake --build $workspaceFolder/build-debug -j$(nproc) && $workspaceFolder/build-debug/$fileNameWithoutExt",
+        "python": "python3 -u $fileName"
     },
-    // ==================================
-    //  НАСТРОЙКА SPELL CHECKER
-    // ==================================
+    "code-runner.runInTerminal": true
+
     "cSpell.language": "en,ru",
-    "cSpell.enabledFileTypes": {
-        "markdown": true,
-        "plaintext": true,
-        "shellscript": true,
-        "cpp": true,
-        "c": true,
-        "json": true
-    },
-    "cSpell.words": [
-        "dylib",
-        "gruntfuggly",
-        "mkhl",
-        "smod"
-    ]
+    "cSpell.words": ["dylib", "gruntfuggly", "mkhl", "smod", "lrsdk", "lrcli"]
 }

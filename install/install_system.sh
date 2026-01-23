@@ -17,6 +17,7 @@ apt update && apt install -y \
 	#shfmt valgrind \
 	libprotobuf-dev libgrpc++-dev libgrpc-dev libprotoc-dev
 
+# exctentions vscode: Python: Python, Black Formatter, Flake8, Mypy Type Checker, isort
 # python3 -m venv .venv
 # source ./.venv/bin/activate
-# pip install grpcio grpcio-tools protobuf mypy-protobuf mypy black
+# pip install flake8 flake8-pyproject wemake-python-styleguide black mypy==1.15.0 isort

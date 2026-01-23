@@ -1,0 +1,101 @@
+[project]
+name = "protject"
+description = "desc"
+dynamic = ["version"]
+requires-python = ">=3.9"
+dependencies = [
+    "pytest==6.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8",
+    "flake8-pyproject",
+    "wemake-python-styleguide",
+    "black",
+    "mypy==1.15.0",
+    "mypy-protobuf",
+    "isort",
+]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+python_files = ["test_*.py", "autotest/*.py"]
+
+norecursedirs = [
+    ".venv",
+]
+
+[tool.flake8]
+exclude = [
+    "build/",
+    "*venv/",
+]
+
+max-line-length = 79
+# https://wemake-python-styleguide.readthedocs.io/en/latest/pages/usage/violations/index.html
+extend-ignore = [
+    "B008", # do not perform function calls in argument defaults
+    "I001", # isort wrong position
+    "I005", # isort unexpected missing import
+    "C812", # missing trailing comma
+    "C813", # missing trailing comma in Python 3
+    "C816", # missing trailing comma in Python 3.6+
+    "D", # docstring checks
+    "N806", # variable in function should be lowercase
+    "S101", # use of assert
+    "S404",  # consider possible security implications associated with the subprocess module
+    "S603", # subprocess call - check for execution of untrusted input
+    "WPS110", # wrong variable name (lol)
+    "WPS111", # too short name
+    "WPS114", # found underscored number name pattern
+    "WPS115", # upper-case constant in a class
+    "WPS118", # too long name
+    "WPS2", # complexity checks WPS200-WPS299
+    "WPS301", # dotted raw import
+    "WPS303", # forbid underscores (_) in numbers
+    "WPS305", # `f` string instead of `format()`
+    "WPS316", # forbid multiple assignment targets for context managers
+    "WPS320", # found multi-line function type annotation
+    "WPS326", # found implicit string concatenation
+    "WPS328", # found useless node: with, for, ...
+    "WPS331", # found variables that are only used for `return`
+    "WPS336", # found explicit string concatenation
+    "WPS337", # found multiline conditions
+    "WPS345", # forbid meaningless math operations with 0 and 1
+    "WPS348", # line that starts with a dot (???)
+    "WPS352", # found multiline loop
+    "WPS404", # found complex default value
+    "WPS412", # `__init__.py` module with logic
+    "WPS420", # keywords 'pass', 'del', 'global', 'nonlocal'
+    "WPS421", # found wrong function call 'print', 'exit', ...
+    "WPS430", # found nested function
+    "WPS431", # found nested class
+    "WPS432", # magic number
+    "WPS440", # block variables overlap
+    "WPS442", # found outer scope names shadowing
+    "WPS508", # found incorrect `not` with compare usage
+    "WPS514", # found implicit `in` condition
+    "WPS529", # found implicit `.get()` dict usage
+    "WPS602", # found using `@staticmethod`
+    "WPS605", # found method without arguments
+    "WPS615", # found unpythonic getter or setter
+    "Q000", # single quotes preferred
+]
+
+[tool.isort]
+src_paths = [
+    "src/",
+]
+
+[tool.black]
+line-length = 79
+
+[tool.mypy]
+strict = true
+implicit_reexport = true
+exclude = [
+]
