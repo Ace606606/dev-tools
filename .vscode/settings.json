@@ -1,109 +1,128 @@
 {
-    /// ======================
-    //       Терминал
-    // ======================
-    "terminal.integrated.cwd": "${workspaceFolder}",
-
-    /// ======================
-    //   EDITOR SETTINGS
-    // ======================
-    "editor.formatOnSave": false,
-    "files.encoding": "utf8",
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true,
-    "editor.detectIndentation": false,
-    "editor.cursorSurroundingLines": 3,
-    "editor.renderWhitespace": "all",
-    "editor.minimap.enabled": true,
-    "editor.minimap.scale": 1,
-    "editor.minimap.size": "fit",
-    "editor.minimap.maxColumn": 80,
-
-    // ============================
-    //  НАСТРОЙКИ ФОРМАТТЕРОВ ПО ЯЗЫКАМ
-    // ============================
-    "[cpp]": {
-        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-        "editor.formatOnSave": true
-    },
-    "[c]": {
-        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-        "editor.formatOnSave": true
-    },
-    "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter",
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports.isort": "explicit"
-        }
-    },
-    "[shellscript]": {
-        "editor.defaultFormatter": "mkhl.shfmt"
-    },
-    "[yaml]": {
-        "editor.defaultFormatter": "redhat.vscode-yaml"
-    },
-    "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
-    },
-
-    // ============================
-    //          CLANGD (C++)
-    // ============================
-    "clangd.path": "clangd",
-    "clangd.arguments": [
-        "--background-index",
-        "--clang-tidy",
-        "--header-insertion=never",
-        "--compile-commands-dir=build-debug",
-        "--completion-style=detailed",
-        "--function-arg-placeholders=false"
-    ],
-    "clangd.fallbackFlags": [ "-std=c++20" ],
-
-    // ============================
-    //          PYTHON
-    // ============================
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    "python.analysis.typeCheckingMode": "strict", // В проекте strict, но в редакторе basic удобнее
-    "python.analysis.autoImportCompletions": true,
-    "python.testing.pytestEnabled": true,
-    
-    // Привязываем линтеры к конфигу в pyproject.toml
-    "mypy-type-checker.args": ["--config-file=${workspaceFolder}/pyproject.toml"],
-    "flake8.args": ["--config=${workspaceFolder}/pyproject.toml"],
-    "black-formatter.args": ["--config=${workspaceFolder}/pyproject.toml"],
-
-    // ============================
-    //          CPP (Интеграция)
-    // ============================
-    "C_Cpp.intelliSenseEngine": "disabled", 
-    "C_Cpp.default.compileCommands": "${workspaceFolder}/build-debug/compile_commands.json",
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-
-    // ==============================
-    //  ИНТЕГРАЦИЯ С CMAKE TOOLS
-    // ==============================
-    "cmake.buildDirectory": "${workspaceFolder}/build-debug",
-    "cmake.configureArgs": [
-        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-        "-DCMAKE_BUILD_TYPE=Debug"
-    ],
-    "cmake.generator": "Unix Makefiles",
-
-    // ============================
-    //  ПРОЧИЕ ПАРАМЕТРЫ
-    // ============================
-    "editor.rulers": [79, 120], // 79 Python (Black), 120 C++
-    "editor.bracketPairColorization.enabled": true,
-
-    "code-runner.executorMap": {
-        "cpp": "cmake --build $workspaceFolder/build-debug -j$(nproc) && $workspaceFolder/build-debug/$fileNameWithoutExt",
-        "c": "cmake --build $workspaceFolder/build-debug -j$(nproc) && $workspaceFolder/build-debug/$fileNameWithoutExt",
-        "python": "python3 -u $fileName"
-    },
-    "code-runner.runInTerminal": true
-
-    "cSpell.language": "en,ru",
-    "cSpell.words": ["dylib", "gruntfuggly", "mkhl", "smod", "lrsdk", "lrcli"]
+     /// ======================
+     //       Терминал
+     // ======================
+     "terminal.integrated.cwd": "${workspaceFolder}",
+     /// ======================
+     //   EDITOR SETTINGS
+     // ======================
+     "editor.formatOnSave": false,
+     "files.encoding": "utf8",
+     "editor.tabSize": 5,
+     "editor.insertSpaces": true,
+     "editor.detectIndentation": false,
+     "editor.cursorSurroundingLines": 3,
+     "editor.renderWhitespace": "all",
+     "editor.minimap.enabled": true,
+     "editor.minimap.scale": 1,
+     "editor.minimap.size": "fit",
+     "editor.minimap.maxColumn": 80,
+     // ============================
+     //  НАСТРОЙКИ ФОРМАТТЕРОВ ПО ЯЗЫКАМ
+     // ============================
+     "[cpp]": {
+          "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+          "editor.formatOnSave": true
+     },
+     "[c]": {
+          "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+          "editor.formatOnSave": true
+     },
+     "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+               "source.organizeImports": "always" // isort
+          }
+     },
+     "[shellscript]": {
+          "editor.defaultFormatter": "mkhl.shfmt"
+     },
+     "[yaml]": {
+          "editor.defaultFormatter": "redhat.vscode-yaml"
+     },
+     "[json]": {
+          "editor.defaultFormatter": "vscode.json-language-features"
+     },
+     // ============================
+     //          CLANGD (C++)
+     // ============================
+     "clangd.path": "clangd",
+     "clangd.arguments": [
+          "--background-index",
+          "--clang-tidy",
+          "--clang-tidy-checks=*",
+          "--header-insertion=iwyu",
+          "--header-insertion-decorators",
+          "--completion-style=detailed",
+          "--function-arg-placeholders=false",
+          "--pch-storage=disk",
+          "--all-scopes-completion",
+          "--cross-file-rename",
+          "--suggest-missing-includes",
+          "--ranking-model=decision_forest"
+     ],
+    "clangd.fallbackFlags": [
+          "-std=c++20"
+     ],
+     // ============================
+     //          PYTHON
+     // ============================
+     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+     "python.analysis.typeCheckingMode": "strict", // pylance
+     "python.analysis.autoImportCompletions": true,
+     "python.testing.pytestEnabled": true,
+     "mypy-type-checker.args": [
+          "--config-file=${workspaceFolder}/pyproject.toml"
+     ],
+     //"flake8.args": ["--config=${workspaceFolder}/pyproject.toml"],
+     "black-formatter.args": [
+          "--config=${workspaceFolder}/pyproject.toml"
+     ],
+     // ============================
+     //          CPP (Интеграция)
+     // ============================
+     "C_Cpp.intelliSenseEngine": "disabled",
+     "C_Cpp.default.compileCommands": "${workspaceFolder}/build-debug/compile_commands.json",
+     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+     // ==============================
+     //  ИНТЕГРАЦИЯ С CMAKE TOOLS
+     // ==============================
+     "cmake.buildDirectory": "${workspaceFolder}/build-debug",
+     "cmake.configureArgs": [
+          "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+          "-DCMAKE_BUILD_TYPE=Debug"
+     ],
+     "cmake.generator": "Unix Makefiles",
+     // ============================
+     //  ПРОЧИЕ ПАРАМЕТРЫ
+     // ============================
+     "editor.rulers": [
+          79,
+          120
+     ], // 79 Python (Black), 120 C++
+     "editor.bracketPairColorization.enabled": true,
+     "code-runner.executorMap": {
+          "cpp": "cmake --build $workspaceFolder/build-debug -j$(nproc) && $workspaceFolder/build-debug/$fileNameWithoutExt",
+          "c": "cmake --build $workspaceFolder/build-debug -j$(nproc) && $workspaceFolder/build-debug/$fileNameWithoutExt",
+          "python": "python3 -u $fileName"
+     },
+     "code-runner.runInTerminal": true,
+     "cSpell.language": "en,ru",
+     "cSpell.enabledFileTypes": {
+          "markdown": true,
+          "plaintext": true,
+          "shellscript": true,
+          "cpp": true,
+          "c": true,
+          "json": true
+     },
+     "cSpell.words": [
+          "dylib",
+          "gruntfuggly",
+          "mkhl",
+          "smod",
+          "lrsdk",
+          "lrcli"
+     ]
 }
