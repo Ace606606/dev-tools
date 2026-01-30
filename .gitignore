@@ -1,5 +1,6 @@
+configs/ssh/hosts.map
+
 */dst/
-*/.venv/
 */bash/
 *.log
 

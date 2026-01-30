@@ -1,12 +1,13 @@
-export CONFIG_ROOT="$HOME/dev-tools"
+export CONFIG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # ${BASH_SOURCE}
 
 #PRINT_DIRECTORY_STRUCTURE
-alias pds="$CONFIG_ROOT/scripts/cpp/dst/print_directory_structure"
+alias directory-structure="$CONFIG_ROOT/scripts/cpp/dst/print_directory_structure"
 #FIND_NETWORK
-alias fndnet="$CONFIG_ROOT/scripts/bash/find_network/find_network.sh"
+alias find-net="$CONFIG_ROOT/scripts/bash/find_network/find_network.sh"
 
-#VSCODE_CONFIG_MANAGER
-vcm() {
+# CONFIGURATION
+
+vscode-configuration() {
 	case "$1" in
 	cpp)
 		$CONFIG_ROOT/scripts/cpp/dst/vscode_config_manager create $CONFIG_ROOT/configs/cpp/.vscode
@@ -14,24 +15,291 @@ vcm() {
 	py)
 		$CONFIG_ROOT/scripts/cpp/dst/vscode_config_manager create $CONFIG_ROOT/configs/py/.vscode
 		;;
+	common)
+		$CONFIG_ROOT/scripts/cpp/dst/vscode_config_manager create $CONFIG_ROOT/configs/code/common/.vscode
+		;;
 	*)
-		echo -e "Invalid argument: "$1".\nUse: 'cpp' or 'py'" >&2
+		echo -e "Invalid argument: "$1".\nUse: 'cpp' or 'py' or 'common'" >&2
 		return 1
 		;;
 	esac
 }
 
-info_dev-tools() {
+clang-configuration() {
+	cp "$CONFIG_ROOT/configs/clang/.clang-format" .
+	cp "$CONFIG_ROOT/configs/clang/.clang-tidy" .
+	echo "Clang configs (.clang-format, .clang-tidy) copied to $(pwd)"
+}
+
+py-env-init() {
+	python3.9 -m venv .venv
+	source ./.venv/bin/activate
+	pip install --upgrade pip
+	pip install black mypy flake8 isort debugpy flake8-pyproject
+	echo "Python VENV ready with Black, Mypy, Flake8 and Isort."
+}
+
+# END CONFIGURATION
+
+# SSH
+
+s() {
+	local target=$1
+	local SSH_MAP_REAL="$CONFIG_ROOT/configs/ssh/hosts.map"
+
+	if [ ! -f "$SSH_MAP_REAL" ]; then
+		echo "Error: Host map not found. Run 'dev-tools-init-ssh' first."
+		return 1
+	fi
+
+	unset HOSTS_MAP
+	declare -A HOSTS_MAP
+	source "$SSH_MAP_REAL"
+
+	if [ -z "$target" ]; then
+		echo "Available hosts (from $SSH_MAP_REAL):"
+		for key in "${!HOSTS_MAP[@]}"; do
+			printf "  %-15s -> %s\n" "$key" "${HOSTS_MAP[$key]}"
+		done
+		return 0
+	fi
+
+	if [[ -v HOSTS_MAP[$target] ]]; then
+		ssh "${HOSTS_MAP[$target]}"
+	else
+		echo "Error: Host '$target' not found in $SSH_MAP_REAL"
+		return 1
+	fi
+}
+
+dev-tools-init-ssh() {
+	local SSH_DIR="$CONFIG_ROOT/configs/ssh"
+	mkdir -p "$SSH_DIR"
+	if [ ! -f "$SSH_DIR/hosts.map" ]; then
+		echo 'HOSTS_MAP+=( ["test"]="ace@127.0.0.1" )' >"$SSH_DIR/hosts.map"
+		echo "SSH map created: $SSH_DIR/hosts.map"
+	fi
+}
+
+# END SSH
+
+# SYSTEM
+
+dev-tools-install-sys() {
+	echo "Updating system packages and installing dependencies..."
+
+	local PACKAGES=(
+		build-essential
+		cmake
+		git
+		gdb
+		lldb
+		clang
+		clangd
+		clang-format
+		clang-tidy
+		cppcheck
+		pkg-config
+		make
+		bash-completion
+		curl
+		wget
+		openssh-client
+		shfmt
+		valgrind
+		# python3 python3-pip python3-venv
+		# libprotobuf-dev libgrpc++-dev libgrpc-dev libprotoc-dev
+	)
+
+	sudo apt update && sudo apt install -y "${PACKAGES[@]}"
+
+	if [ $? -eq 0 ]; then
+		echo "All system dependencies installed successfully!"
+	else
+		echo "Error: Package installation failed."
+		return 1
+	fi
+}
+
+dev-tools-vscode-sync-extension() {
+	local EXT_DIR="$HOME/.vscode/extensions"
+	local ARCHIVE="$CONFIG_ROOT/configs/code/code.tar.xz"
+
+	mkdir -p "$EXT_DIR"
+
+	echo "Unpacking extensions to $EXT_DIR..."
+	tar -xJf "$ARCHIVE" -C "$EXT_DIR" \
+		--strip-components=2 \
+		--exclude='*.json' \
+		--exclude='*.vsix' \
+		--exclude='*.deb'
+
+	echo "Done! Restart VS Code to apply changes."
+}
+
+dev-tools-build-cpp() {
+	local BUILD_SCRIPT="$CONFIG_ROOT/install/build/build.sh"
+	if [ -f "$BUILD_SCRIPT" ]; then
+		bash "$BUILD_SCRIPT"
+	else
+		echo "Error: Build script not found at $BUILD_SCRIPT"
+	fi
+}
+
+dev-tools-vim-configuration() {
+	if [ -f "$CONFIG_ROOT/configs/vim/.vimrc" ]; then
+		if ! cmp -s "$CONFIG_ROOT/configs/vim/.vimrc" "$HOME/.vimrc"; then
+			cp "$CONFIG_ROOT/configs/vim/.vimrc" "$HOME/.vimrc"
+			echo "Vim config updated in $HOME"
+		fi
+	else
+		echo "Error: .vimrc not found in $CONFIG_ROOT/configs/vim/"
+	fi
+}
+
+# END SYSTEM
+
+# BUILD MAIN
+
+dev-tools-default_init() {
+	vscode-configuration common
+	clang-configuration
+}
+
+def-tools-default_init-system() {
+	dev-tools-install-sys
+	dev-tools-vscode-sync-extension
+	dev-tools-vim-configuration
+	dev-tools-init-ssh
+}
+
+# END BUILD MAIN
+
+# FUNCTIONS CPP/PY
+
+tidy() {
+	local MY_CONFIG="$CONFIG_ROOT/configs/clang/.clang-tidy"
+
+	local DB_PATH=""
+	[ -d "./build" ] && [ -f "./build/compile_commands.json" ] && DB_PATH="build"
+	[ -d "./build-debug" ] && [ -f "./build-debug/compile_commands.json" ] && DB_PATH="build-debug"
+
+	local FILES=""
+	if [ -z "$1" ]; then
+		FILES=$(find . -maxdepth 1 -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h")
+	else
+		FILES="$@"
+	fi
+
+	if [ -z "$FILES" ]; then
+		echo "No source files found to check."
+		return 0
+	fi
+
+	local TEAM_CONFIG
+	TEAM_CONFIG=$(git rev-parse --show-toplevel 2>/dev/null | xargs -I {} find {} -maxdepth 2 -name ".clang-tidy" | head -n 1)
+
+	if [ -n "$TEAM_CONFIG" ]; then
+		echo "--> Using TEAM config: $TEAM_CONFIG"
+		if [ -n "$DB_PATH" ]; then
+			clang-tidy $FILES -p "$DB_PATH"
+		else
+			clang-tidy $FILES -- -std=c++17
+		fi
+	else
+		echo "--> Using MY REPO config."
+		if [ -n "$DB_PATH" ]; then
+			clang-tidy $FILES -p "$DB_PATH" --config="$(cat "$MY_CONFIG")"
+		else
+			clang-tidy $FILES --config="$(cat "$REPO_CONFIG")" -- -std=c++17
+		fi
+	fi
+}
+
+fmt() {
+	local MY_FORMAT="$CONFIG_ROOT/configs/clang/.clang-format"
+
+	local FILES=""
+	if [ -z "$1" ]; then
+		FILES=$(find . -maxdepth 1 -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h")
+	else
+		FILES="$@"
+	fi
+
+	if [ -z "$FILES" ]; then
+		echo "No source files found to format."
+		return 0
+	fi
+
+	local TEAM_FORMAT
+	TEAM_FORMAT=$(git rev-parse --show-toplevel 2>/dev/null | xargs -I {} find {} -maxdepth 2 -name ".clang-format" | head -n 1)
+
+	if [ -n "$TEAM_FORMAT" ]; then
+		echo "--> Formatting with TEAM config: $TEAM_FORMAT"
+		clang-format -i $FILES
+	else
+		echo "--> Formatting with MY REPO config."
+		clang-format -i -style="file:$MY_FORMAT" $FILES
+	fi
+}
+
+py-fix() {
+	if [ -d ".venv" ]; then
+		echo "Formatting with Black and isort..."
+		local TARGET=${1:-"."}
+		./.venv/bin/black "$TARGET"
+		./.venv/bin/isort "$TARGET"
+	else
+		echo "Error: .venv not found. Run dev-tools-py-env-init first."
+	fi
+}
+
+# Проверка линтером
+py-check() {
+	if [ -d ".venv" ]; then
+		echo "Checking with Flake8 and Mypy..."
+		local TARGET=${1:-"."}
+		./.venv/bin/flake8 "$TARGET" --extend-exclude=.venv
+		./.venv/bin/mypy "$TARGET" --exclude ".venv"
+	else
+		echo "Error: .venv not found."
+	fi
+}
+
+# END FUNCTIONS CPP/PY
+
+dev-tools-info() {
+
+	# FUNCTION
 	printf "\nAvailable commands:\n\n"
 
-	printf "  %-20s - %s\n" "vcm <lang>" "VSCode Configuration Manager."
-	printf "                       %s\n" "Accepts one argument: cpp or py."
-	printf "                       %s\n\n" "Creates or updates the .vscode folder for the selected language."
+	printf "  %-35s - %s\n" "directory-structure" "prints the directory tree structure of the current project."
+	printf "  %-35s - %s\n" "find-net <IP> <MASK>" "Example: find-net 192.168.1.10 255.255.255.0"
+	printf "  %-35s - %s\n" "s <alias>" "SSH connection via hosts.map"
 
-	printf "  %-20s - %s\n" "pds" "Prints the directory tree structure of the current project."
-	printf "                       %s\n\n" "Takes no arguments."
+	# TOOLS
+	echo ""
+	printf "  %-35s - %s\n" "tidy <file> or <>" "Clang-tidy (Team/Repo priority)"
+	printf "  %-35s - %s\n" "fmt <file> or <>" "Clang-format (Team/Repo priority)"
+	printf "  %-35s - %s\n" "py-fix <file/dir>" "Format Python code (Black + Isort)"
+	printf "  %-35s - %s\n" "py-check <file/dir>" "Lint Python code (Flake8 + Mypy)"
 
-	printf "  %-20s - %s\n" "fndnet <IP> <MASK>" "Finds the network based on IP and subnet mask."
-	printf "                       %s\n\n" "Example: fndnet 192.168.1.10 255.255.255.0"
+	# CONFIGURATION
+	echo ""
+	printf "  %-35s - %s\n" "dev-tools-default_init" "Copy .vsconf, clang-tidy, clang-format"
+	printf "  %-35s - %s\n" "vscode-configuration <lang>" "VSCode Configuration Manager."
+	printf "  %-35s - %s\n" "clang-configuration" "clang configuration copy"
+	printf "  %-35s - %s\n" "py-env-init" "Python VENV"
 
+	# BUILD & INSTALL
+	echo ""
+	printf "  %-35s - %s\n" "def-tools-default_init-system" "Build default"
+	printf "  %-35s - %s\n" "dev-tools-install-sys" "Updating system packages and installing dependencies"
+	printf "  %-35s - %s\n" "dev-tools-vscode-sync-extension" "unpacking extensions VScode"
+	printf "  %-35s - %s\n" "dev-tools-build-cpp" "run script-build for cpp"
+	printf "  %-35s - %s\n" "dev-tools-vim-configuration" "update configuration vim in $HOME"
+	printf "  %-35s - %s\n" "dev-tools-init-ssh" "Init config for SSH"
+	# END BUILD
+
+	# SYSTEM
 }

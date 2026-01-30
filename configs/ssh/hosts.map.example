@@ -1,0 +1,4 @@
+# ["alias"]="user@ip"
+HOSTS_MAP+=(
+    ["test-host"]="test@127.0.0.1"
+)
