@@ -1,9 +1,9 @@
 export CONFIG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # ${BASH_SOURCE}
 
 #PRINT_DIRECTORY_STRUCTURE
-alias directory-structure="$CONFIG_ROOT/scripts/cpp/dst/print_directory_structure"
+alias dev-tools-directory-structure="$CONFIG_ROOT/scripts/cpp/dst/print_directory_structure"
 #FIND_NETWORK
-alias find-net="$CONFIG_ROOT/scripts/bash/find_network/find_network.sh"
+alias dev-tools-find-net="$CONFIG_ROOT/scripts/bash/find_network/find_network.sh"
 
 # ============================
 #       UNIT CONFIGURATION
