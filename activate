@@ -165,8 +165,8 @@ dev-tools-vim-configuration() {
 # ============================
 
 dev-tools-default-init-conf() {
-	vscode-configuration common
-	clang-configuration
+	dev-tools-vscode-configuration common
+	dev-tools-clang-toml-configuration
 }
 
 dev-tools-default_init-system() {
