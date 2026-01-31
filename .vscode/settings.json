@@ -22,15 +22,15 @@
      // ============================
      "[cpp]": {
           "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-          "editor.formatOnSave": true
+          "editor.formatOnSave": false
      },
      "[c]": {
           "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-          "editor.formatOnSave": true
+          "editor.formatOnSave": false
      },
      "[python]": {
           "editor.defaultFormatter": "ms-python.black-formatter",
-          "editor.formatOnSave": true,
+          "editor.formatOnSave": false,
           "editor.codeActionsOnSave": {
                "source.organizeImports": "always" // isort
           }
@@ -118,11 +118,21 @@
           "json": true
      },
      "cSpell.words": [
+          "debugpy",
           "dylib",
           "gruntfuggly",
-          "mkhl",
-          "smod",
+          "Isort",
+          "libgrpc",
+          "libprotobuf",
+          "libprotoc",
+          "lldb",
+          "lrcli",
           "lrsdk",
-          "lrcli"
+          "mkhl",
+          "Mypy",
+          "pyproject",
+          "smod",
+          "toplevel",
+          "vsconf"
      ]
 }

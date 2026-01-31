@@ -1,0 +1,13 @@
+# .clangd (минимальный, рабочий)
+CompileFlags:
+  Add: 
+    - -std=c++20
+    - -Wall
+    - -Wextra
+    - -Wpedantic
+    - -Werror
+    # Включаем статический анализатор
+    - -Xclang
+    - -analyze
+    - -Xclang
+    - -analyzer-checker=core.NullDereference

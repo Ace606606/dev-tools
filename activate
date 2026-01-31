@@ -5,9 +5,11 @@ alias directory-structure="$CONFIG_ROOT/scripts/cpp/dst/print_directory_structur
 #FIND_NETWORK
 alias find-net="$CONFIG_ROOT/scripts/bash/find_network/find_network.sh"
 
-# CONFIGURATION
+# ============================
+#       UNIT CONFIGURATION
+# ============================
 
-vscode-configuration() {
+dev-tools-vscode-configuration() {
 	case "$1" in
 	cpp)
 		$CONFIG_ROOT/scripts/cpp/dst/vscode_config_manager create $CONFIG_ROOT/configs/cpp/.vscode
@@ -25,13 +27,14 @@ vscode-configuration() {
 	esac
 }
 
-clang-configuration() {
+dev-tools-clang-toml-configuration() {
 	cp "$CONFIG_ROOT/configs/clang/.clang-format" .
 	cp "$CONFIG_ROOT/configs/clang/.clang-tidy" .
-	echo "Clang configs (.clang-format, .clang-tidy) copied to $(pwd)"
+	cp "$CONFIG_ROOT/configs/py/pyproject.toml" .
+	echo "Clang configs (.clang-format, .clang-tidy) and toml config copied to $(pwd)"
 }
 
-py-env-init() {
+dev-tools-py-env-init() {
 	python3.9 -m venv .venv
 	source ./.venv/bin/activate
 	pip install --upgrade pip
@@ -39,9 +42,9 @@ py-env-init() {
 	echo "Python VENV ready with Black, Mypy, Flake8 and Isort."
 }
 
-# END CONFIGURATION
-
-# SSH
+# ============================
+#       SSH MANAGEMENT
+# ============================
 
 s() {
 	local target=$1
@@ -81,9 +84,9 @@ dev-tools-init-ssh() {
 	fi
 }
 
-# END SSH
-
-# SYSTEM
+# ============================
+#       SYSTEM & CONFIG
+# ============================
 
 dev-tools-install-sys() {
 	echo "Updating system packages and installing dependencies..."
@@ -157,28 +160,29 @@ dev-tools-vim-configuration() {
 	fi
 }
 
-# END SYSTEM
+# ============================
+#       BUILD SYSTEM & CONFIG
+# ============================
 
-# BUILD MAIN
-
-dev-tools-default_init() {
+dev-tools-default-init-conf() {
 	vscode-configuration common
 	clang-configuration
 }
 
-def-tools-default_init-system() {
+dev-tools-default_init-system() {
 	dev-tools-install-sys
 	dev-tools-vscode-sync-extension
+	dev-tools-build-cpp
 	dev-tools-vim-configuration
 	dev-tools-init-ssh
 }
 
-# END BUILD MAIN
+# ============================
+#       CPP TOOLS
+# ============================
 
-# FUNCTIONS CPP/PY
-
-tidy() {
-	local MY_CONFIG="$CONFIG_ROOT/configs/clang/.clang-tidy"
+dev-tools-tidy() {
+	local LOCAL_CONFIG="$CONFIG_ROOT/configs/clang/.clang-tidy"
 
 	local DB_PATH=""
 	[ -d "./build" ] && [ -f "./build/compile_commands.json" ] && DB_PATH="build"
@@ -207,17 +211,17 @@ tidy() {
 			clang-tidy $FILES -- -std=c++17
 		fi
 	else
-		echo "--> Using MY REPO config."
+		echo "--> Using LOCAL config."
 		if [ -n "$DB_PATH" ]; then
-			clang-tidy $FILES -p "$DB_PATH" --config="$(cat "$MY_CONFIG")"
+			clang-tidy $FILES -p "$DB_PATH" --config="$(cat "$LOCAL_CONFIG")"
 		else
-			clang-tidy $FILES --config="$(cat "$REPO_CONFIG")" -- -std=c++17
+			clang-tidy $FILES --config="$(cat "$LOCAL_CONFIG")" -- -std=c++17
 		fi
 	fi
 }
 
-fmt() {
-	local MY_FORMAT="$CONFIG_ROOT/configs/clang/.clang-format"
+dev-tools-fmt() {
+	local LOCAL_FORMAT="$CONFIG_ROOT/configs/clang/.clang-format"
 
 	local FILES=""
 	if [ -z "$1" ]; then
@@ -238,68 +242,292 @@ fmt() {
 		echo "--> Formatting with TEAM config: $TEAM_FORMAT"
 		clang-format -i $FILES
 	else
-		echo "--> Formatting with MY REPO config."
-		clang-format -i -style="file:$MY_FORMAT" $FILES
+		echo "--> Formatting with LOCAL config."
+		clang-format -i -style="file:$LOCAL_FORMAT" $FILES
 	fi
 }
 
-py-fix() {
-	if [ -d ".venv" ]; then
-		echo "Formatting with Black and isort..."
-		local TARGET=${1:-"."}
-		./.venv/bin/black "$TARGET"
-		./.venv/bin/isort "$TARGET"
+dev-tools-cpp-check() {
+	local TARGET=${1:-"."}
+	echo "Running cppcheck on $TARGET..."
+	# --enable=all включает все проверки (style, performance, portability)
+	# --suppress=missingIncludeSystem убирает шум от системных либ
+	# -i пропускать
+	local COMMON_FLAGS="--enable=all --suppress=missingIncludeSystem --suppress=unusedFunction -i build -i build-debug"
+
+	# Если мы запускаем просто `cpp-check` без аргументов и есть база — проверяем ВЕСЬ проект
+	if [ -z "$1" ] && [ -f "./build-debug/compile_commands.json" ]; then
+		echo "--> Using project file (full scan)"
+		cppcheck --project=build-debug/compile_commands.json $COMMON_FLAGS
+	elif [ -z "$1" ] && [ -f "./build/compile_commands.json" ]; then
+		echo "--> Using project file (full scan)"
+		cppcheck --project=build/compile_commands.json $COMMON_FLAGS
 	else
-		echo "Error: .venv not found. Run dev-tools-py-env-init first."
+		echo "--> Manual scan mode"
+		local ALL_HEADER_DIRS=$(find . -type f \( -name "*.h" -o -name "*.hpp" \) -exec dirname {} + | sort -u | xargs -I {} echo -n "-I {} ")
+
+		cppcheck $COMMON_FLAGS --inconclusive --std=c++17 \
+			$ALL_HEADER_DIRS "$TARGET"
 	fi
 }
 
-# Проверка линтером
-py-check() {
+# ============================
+#       SANDBOX & VALGRIND
+# ============================
+
+# Генератор шаблона теста
+dev-tools-sandbox-create() {
+	[ -z "$1" ] && {
+		echo "Usage: sandbox-create <ClassName>"
+		return 1
+	}
+	local CLASS_NAME="$1"
+	local FILE="test_${CLASS_NAME}.cpp"
+
+	if [ -f "$FILE" ]; then
+		echo "Error: $FILE already exists!"
+		return 1
+	fi
+
+	cat >"$FILE" <<EOF
+#include <iostream>
+#include <cassert>
+#include <stdexcept>
+#include "${CLASS_NAME}.hpp"
+
+// ============ Basic tests ============
+void test_logic() {
+    std::cout << "Running test_logic... ";
+    // ${CLASS_NAME} obj;
+    // assert(obj.some_method() == true);
+    std::cout << "OK" << std::endl;
+}
+
+// ============ Memory tests ============
+void test_memory() {
+    std::cout << "Running test_memory... ";
+    ${CLASS_NAME}* obj = new ${CLASS_NAME}();
+    // TODO: test something
+    delete obj;
+    std::cout << "OK" << std::endl;
+}
+
+int main() {
+    std::cout << "=== RUNNING TESTS FOR ${CLASS_NAME} ===\n" << std::endl;
+    try {
+        test_logic();
+        test_memory();
+        std::cout << "\nALL TESTS PASSED!" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "\nTEST FAILED: " << e.what() << std::endl;
+        return 1;
+    } catch (...) {
+        std::cerr << "\nUNKNOWN ERROR" << std::endl;
+        return 1;
+    }
+    return 0;
+}
+EOF
+	echo "Template created: $FILE"
+	code "$FILE"
+}
+
+dev-tools-sandbox-build() {
+	[ -z "$1" ] && {
+		echo "Usage: sandbox-build <test.cpp>"
+		return 1
+	}
+
+	local TEST_FILE=$1
+	local OUTPUT="sandbox_bin"
+
+	# Собираем инклуды
+	local ALL_INC=$(find . -type f \( -name "*.h" -o -name "*.hpp" \) -exec dirname {} + | sort -u | xargs -I {} echo -n "-I{} ")
+
+	# Ищем объектные файлы, ИСКЛЮЧАЯ все, где в имени есть "main"
+	local BUILD_DIR="./build-debug"
+	local OBJS=""
+	if [ -d "$BUILD_DIR" ]; then
+		echo "--> Linking with objects from $BUILD_DIR (excluding all mains)"
+		# Мы исключаем любые файлы, в пути которых есть "main.cpp.o" или "main.o"
+		OBJS=$(find "$BUILD_DIR" -name "*.o" | grep -vE "/main\.(cpp|c)?\.o$")
+	fi
+
+	echo "Building sandbox..."
+	# Добавляем -v в случае ошибок, чтобы видеть, что именно линкуется
+	g++ -std=c++17 -g -O0 $ALL_INC "$TEST_FILE" $OBJS -o "$OUTPUT"
+
+	if [ $? -eq 0 ]; then
+		echo "Success! Run: mem-check ./$OUTPUT"
+	else
+		echo "Build failed. Check for duplicate symbols or missing objects."
+	fi
+}
+
+dev-tools-mem-check() {
+	if [ -z "$1" ]; then
+		echo "Usage: mem-check <path_to_binary> [args]"
+		return 1
+	fi
+
+	local BINARY=$1
+	shift # Убираем имя бинарника из аргументов
+	#--log-file=valgrind.log
+	echo "Running Valgrind for $BINARY..."
+	# --leak-check=full ищет каждую утечку
+	# --track-origins=yes показывает, где была выделена память
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes "$BINARY" "$@"
+}
+
+dev-tools-sandbox-valgrind() {
+	[ -z "$1" ] && {
+		echo "Usage: sandbox-test <test.cpp>"
+		return 1
+	}
+
+	local TEST_FILE=$1
+	local OUTPUT="sandbox_bin_temp"
+
+	if sandbox-build "$TEST_FILE"; then
+		[ -f "sandbox_bin" ] && mv "sandbox_bin" "$OUTPUT"
+
+		echo -e "\n--- START DYNAMIC ANALYSIS ---\n"
+
+		mem-check "./$OUTPUT"
+
+		echo -e "\n--- CLEANING UP ---"
+		rm -f "$OUTPUT"
+		echo "Temporary binary $OUTPUT removed."
+	else
+		echo "Error: Build failed, skipping test."
+		return 1
+	fi
+}
+
+dev-tools-sandbox-asan() {
+	[ -z "$1" ] && {
+		echo "Usage: sandbox-asan <test.cpp>"
+		return 1
+	}
+
+	local TEST_FILE=$1
+	local OUTPUT="sandbox_asan_bin"
+
+	local ALL_INC=$(find . -type f \( -name "*.h" -o -name "*.hpp" \) -exec dirname {} + | sort -u | xargs -I {} echo -n "-I{} ")
+	local OBJS=$(find "./build-debug" -name "*.o" | grep -vE "/main\.(cpp|c)?\.o$")
+
+	echo "Building with Address & Undefined Sanitizers..."
+
+	# Ключевые флаги:
+	# -fsanitize=address (утечки и память)
+	# -fsanitize=undefined (деление на ноль, nullptr и т.д.)
+	# -fno-omit-frame-pointer (для красивых стектрейсов)
+	g++ -std=c++17 -g -O1 $ALL_INC "$TEST_FILE" $OBJS -o "$OUTPUT" \
+		-fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer
+
+	if [ $? -eq 0 ]; then
+		echo -e "\n--- RUNNING WITH ASAN ---\n"
+		./"$OUTPUT"
+		rm -f "$OUTPUT"
+	else
+		echo "Build failed."
+	fi
+}
+
+# ============================
+#       PY TOOLS
+# ============================
+
+dev-tools-py-fix() {
+	local TARGET=${1:-"."}
+	local LOCAL_CONFIG="$CONFIG_ROOT/configs/py/pyproject.toml"
+
 	if [ -d ".venv" ]; then
-		echo "Checking with Flake8 and Mypy..."
-		local TARGET=${1:-"."}
-		./.venv/bin/flake8 "$TARGET" --extend-exclude=.venv
-		./.venv/bin/mypy "$TARGET" --exclude ".venv"
+		local TEAM_CONFIG
+		TEAM_CONFIG=$(git rev-parse --show-toplevel 2>/dev/null | xargs -I {} find {} -maxdepth 2 -name "pyproject.toml" | head -n 1)
+
+		if [ -n "$TEAM_CONFIG" ]; then
+			echo "--> Formatting with TEAM config: $TEAM_CONFIG"
+			./.venv/bin/black "$TARGET"
+			./.venv/bin/isort "$TARGET"
+		else
+			echo "--> Formatting with LOCAL config."
+			./.venv/bin/black --config "$LOCAL_CONFIG" "$TARGET"
+			./.venv/bin/isort --settings-path "$LOCAL_CONFIG" "$TARGET"
+		fi
 	else
 		echo "Error: .venv not found."
 	fi
 }
 
-# END FUNCTIONS CPP/PY
+dev-tools-py-check() {
+	local TARGET=${1:-"."}
+	local LOCAL_CONFIG="$CONFIG_ROOT/configs/py/pyproject.toml"
+
+	if [ -d ".venv" ]; then
+		local TEAM_CONFIG
+		TEAM_CONFIG=$(git rev-parse --show-toplevel 2>/dev/null | xargs -I {} find {} -maxdepth 2 -name "pyproject.toml" | head -n 1)
+
+		echo "Checking $TARGET..."
+		if [ -n "$TEAM_CONFIG" ]; then
+			echo "--> Using TEAM config: $TEAM_CONFIG"
+			./.venv/bin/flake8 "$TARGET" --extend-exclude=.venv
+			./.venv/bin/mypy "$TARGET" --exclude ".venv"
+		else
+			echo "--> Using LOCAL config."
+			./.venv/bin/flake8 "$TARGET" --extend-exclude=.venv
+			./.venv/bin/mypy --config-file "$LOCAL_CONFIG" "$TARGET" --exclude ".venv"
+		fi
+	else
+		echo "Error: .venv not found."
+	fi
+}
+
+# ============================
+#       INFO
+# ============================
 
 dev-tools-info() {
-
-	# FUNCTION
 	printf "\nAvailable commands:\n\n"
 
-	printf "  %-35s - %s\n" "directory-structure" "prints the directory tree structure of the current project."
-	printf "  %-35s - %s\n" "find-net <IP> <MASK>" "Example: find-net 192.168.1.10 255.255.255.0"
+	# ==== NAVIGATION & SSH ====
+	printf "  %-35s - %s\n" "dev-tools-directory-structure" "prints the directory tree structure of the current project."
 	printf "  %-35s - %s\n" "s <alias>" "SSH connection via hosts.map"
 
-	# TOOLS
+	printf "  %-35s - %s\n" "dev-tools-find-net <IP> <MASK>" "Example: find-net 192.168.1.10 255.255.255.0"
+
+	# ==== TOOLS (CPP & PY) ====
 	echo ""
-	printf "  %-35s - %s\n" "tidy <file> or <>" "Clang-tidy (Team/Repo priority)"
-	printf "  %-35s - %s\n" "fmt <file> or <>" "Clang-format (Team/Repo priority)"
-	printf "  %-35s - %s\n" "py-fix <file/dir>" "Format Python code (Black + Isort)"
-	printf "  %-35s - %s\n" "py-check <file/dir>" "Lint Python code (Flake8 + Mypy)"
+	printf "  %-35s - %s\n" "dev-tools-tidy <file> or <>" "Clang-tidy (Team/Repo priority)"
+	printf "  %-35s - %s\n" "dev-tools-fmt <file> or <>" "Clang-format (Team/Repo priority)"
+	printf "  %-35s - %s\n" "dev-tools-py-fix <file/dir>" "Format Python code (Black + Isort)"
+	printf "  %-35s - %s\n" "dev-tools-py-check <file/dir>" "Lint Python code (Flake8 + Mypy)"
+
+	# ==== ANALYZERS (DYNAMICS) ===
+	echo ""
+	printf "  %-35s - %s\n" "dev-tools-cpp-check <file/dir>" "Static analysis cppcheck (leaks, nullptrs, unused)"
+	printf "  %-35s - %s\n" "dev-tools-mem-check <bin>" "Run Valgrind"
+
+	# ==== SANDBOX (UNIT TESTING) ====
+	echo ""
+	printf "  %-35s - %s\n" "dev-tools-sandbox-create <Class>" "Generate test template (test_Class.cpp)"
+	printf "  %-35s - %s\n" "dev-tools-sandbox-build <test.cpp>" "Build sandbox with project objects (.o)"
+	printf "  %-35s - %s\n" "dev-tools-sandbox-valgrind <test.cpp>" "Deep check (Valgrind) + Auto-clean"
+	printf "  %-35s - %s\n" "dev-tools-sandbox-asan <test.cpp>" "Fast check (Sanitizers) + Auto-clean"
 
 	# CONFIGURATION
 	echo ""
-	printf "  %-35s - %s\n" "dev-tools-default_init" "Copy .vsconf, clang-tidy, clang-format"
-	printf "  %-35s - %s\n" "vscode-configuration <lang>" "VSCode Configuration Manager."
-	printf "  %-35s - %s\n" "clang-configuration" "clang configuration copy"
-	printf "  %-35s - %s\n" "py-env-init" "Python VENV"
+	printf "  %-35s - %s\n" "dev-tools-default-init-conf" "Copy .vsconf, clang-tidy, clang-format"
+	printf "  %-35s - %s\n" "dev-tools-vscode-configuration <lang>" "VSCode Configuration Manager."
+	printf "  %-35s - %s\n" "dev-tools-clang-toml-configuration" "clang configuration copy"
+	printf "  %-35s - %s\n" "dev-tools-py-env-init" "Python VENV"
 
-	# BUILD & INSTALL
+	# ==== SYSTEM & INIT ====
 	echo ""
-	printf "  %-35s - %s\n" "def-tools-default_init-system" "Build default"
+	printf "  %-35s - %s\n" "dev-tools-default_init-system" "Build default"
 	printf "  %-35s - %s\n" "dev-tools-install-sys" "Updating system packages and installing dependencies"
 	printf "  %-35s - %s\n" "dev-tools-vscode-sync-extension" "unpacking extensions VScode"
 	printf "  %-35s - %s\n" "dev-tools-build-cpp" "run script-build for cpp"
 	printf "  %-35s - %s\n" "dev-tools-vim-configuration" "update configuration vim in $HOME"
 	printf "  %-35s - %s\n" "dev-tools-init-ssh" "Init config for SSH"
-	# END BUILD
-
-	# SYSTEM
 }
