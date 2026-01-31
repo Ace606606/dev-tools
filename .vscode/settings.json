@@ -126,8 +126,6 @@
           "libprotobuf",
           "libprotoc",
           "lldb",
-          "lrcli",
-          "lrsdk",
           "mkhl",
           "Mypy",
           "pyproject",
