@@ -484,50 +484,123 @@ dev-tools-py-check() {
 }
 
 # ============================
+#       CMAKE BUILD HELPERS
+# ============================
+
+dev-tools-cmake-conf() {
+    local TYPE=${1:-debug}
+    local DIR="build-${TYPE}"
+    local ENV_CONFIG="$CONFIG_ROOT/configs/cmake/build_env"
+    
+    [ -f "$ENV_CONFIG" ] && source "$ENV_CONFIG"
+
+    local CMD_ARGS="$COMMON_ARGS"
+    if [ "$TYPE" == "release" ]; then
+        CMD_ARGS="$CMD_ARGS $RELEASE_ARGS"
+    else
+        CMD_ARGS="$CMD_ARGS $DEBUG_ARGS"
+    fi
+
+    [[ ! $CMD_ARGS =~ "CMAKE_BUILD_TYPE" ]] && CMD_ARGS="$CMD_ARGS -DCMAKE_BUILD_TYPE=${TYPE^}"
+    [[ ! $CMD_ARGS =~ "CMAKE_EXPORT_COMPILE_COMMANDS" ]] && CMD_ARGS="$CMD_ARGS -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+
+    echo "--> Configuring $TYPE in $DIR..."
+    echo "--> Full args: $CMD_ARGS"
+    cmake -B "$DIR" $CMD_ARGS
+}
+
+dev-tools-cmake-build() {
+    local TYPE=${1:-debug}
+    local DIR="build-${TYPE}"
+
+    if [ ! -d "$DIR" ]; then
+        echo "--> Directory $DIR not found. Running config..."
+	   echo "$TYPE"
+        dev-tools-cmake-conf "$TYPE" || return 1
+    fi
+
+    echo "--> Compiling $TYPE..."
+    cmake --build "$DIR" -j$(nproc)
+}
+
+dev-tools-cmake-rebuild() {
+    dev-tools-cmake-clean
+    dev-tools-cmake-build "$@"
+}
+
+dev-tools-gtest-run() {
+	local TYPE=${1:-debug}
+	local DIR="build-${TYPE}"
+
+	if [ ! -d "$DIR" ]; then
+		echo "Error: Directory $DIR not found. Build it first with 'dev-tools-cmake-build $TYPE'"
+		return 1
+	fi
+
+	echo "--> Running tests from $DIR..."
+	cd "$DIR" && ctest --output-on-failure
+	cd - >/dev/null
+}
+
+dev-tools-cmake-clean() {
+	echo "--> Cleaning all build directories..."
+	rm -rf build-debug build-release
+}
+
+# ============================
 #       INFO
 # ============================
 
 dev-tools-info() {
+	local W=50
 	printf "\nAvailable commands:\n\n"
 
 	# ==== NAVIGATION & SSH ====
-	printf "  %-35s - %s\n" "dev-tools-directory-structure" "prints the directory tree structure of the current project."
-	printf "  %-35s - %s\n" "s <alias>" "SSH connection via hosts.map"
+	printf "  %-*s - %s\n" "$W" "dev-tools-directory-structure" "prints the directory tree structure of the current project."
+	printf "  %-*s - %s\n" "$W" "s <alias>" "SSH connection via hosts.map"
 
-	printf "  %-35s - %s\n" "dev-tools-find-net <IP> <MASK>" "Example: find-net 192.168.1.10 255.255.255.0"
+	printf "  %-*s - %s\n" "$W" "dev-tools-find-net <IP> <MASK>" "Example: find-net 192.168.1.10 255.255.255.0"
 
 	# ==== TOOLS (CPP & PY) ====
 	echo ""
-	printf "  %-35s - %s\n" "dev-tools-tidy <file> or <>" "Clang-tidy (Team/Repo priority)"
-	printf "  %-35s - %s\n" "dev-tools-fmt <file> or <>" "Clang-format (Team/Repo priority)"
-	printf "  %-35s - %s\n" "dev-tools-py-fix <file/dir>" "Format Python code (Black + Isort)"
-	printf "  %-35s - %s\n" "dev-tools-py-check <file/dir>" "Lint Python code (Flake8 + Mypy)"
+	printf "  %-*s - %s\n" "$W" "dev-tools-tidy <file> or <>" "Clang-tidy (Team/Repo priority)"
+	printf "  %-*s - %s\n" "$W" "dev-tools-fmt <file> or <>" "Clang-format (Team/Repo priority)"
+	printf "  %-*s - %s\n" "$W" "dev-tools-py-fix <file/dir>" "Format Python code (Black + Isort)"
+	printf "  %-*s - %s\n" "$W" "dev-tools-py-check <file/dir>" "Lint Python code (Flake8 + Mypy)"
 
 	# ==== ANALYZERS (DYNAMICS) ===
 	echo ""
-	printf "  %-35s - %s\n" "dev-tools-cpp-check <file/dir>" "Static analysis cppcheck (leaks, nullptrs, unused)"
-	printf "  %-35s - %s\n" "dev-tools-mem-check <bin>" "Run Valgrind"
+	printf "  %-*s - %s\n" "$W" "dev-tools-cpp-check <file/dir>" "Static analysis cppcheck (leaks, nullptrs, unused)"
+	printf "  %-*s - %s\n" "$W" "dev-tools-mem-check <bin>" "Run Valgrind"
 
 	# ==== SANDBOX (UNIT TESTING) ====
 	echo ""
-	printf "  %-35s - %s\n" "dev-tools-sandbox-create <Class>" "Generate test template (test_Class.cpp)"
-	printf "  %-35s - %s\n" "dev-tools-sandbox-build <test.cpp>" "Build sandbox with project objects (.o)"
-	printf "  %-35s - %s\n" "dev-tools-sandbox-valgrind <test.cpp>" "Deep check (Valgrind) + Auto-clean"
-	printf "  %-35s - %s\n" "dev-tools-sandbox-asan <test.cpp>" "Fast check (Sanitizers) + Auto-clean"
+	printf "  %-*s - %s\n" "$W" "dev-tools-sandbox-create <Class>" "Generate test template (test_Class.cpp)"
+	printf "  %-*s - %s\n" "$W" "dev-tools-sandbox-build <test.cpp>" "Build sandbox with project objects (.o)"
+	printf "  %-*s - %s\n" "$W" "dev-tools-sandbox-valgrind <test.cpp>" "Deep check (Valgrind) + Auto-clean"
+	printf "  %-*s - %s\n" "$W" "dev-tools-sandbox-asan <test.cpp>" "Fast check (Sanitizers) + Auto-clean"
 
 	# CONFIGURATION
 	echo ""
-	printf "  %-35s - %s\n" "dev-tools-default-init-conf" "Copy .vsconf, clang-tidy, clang-format"
-	printf "  %-35s - %s\n" "dev-tools-vscode-configuration <lang>" "VSCode Configuration Manager."
-	printf "  %-35s - %s\n" "dev-tools-clang-toml-configuration" "clang configuration copy"
-	printf "  %-35s - %s\n" "dev-tools-py-env-init" "Python VENV"
+	printf "  %-*s - %s\n" "$W" "dev-tools-default-init-conf" "Copy .vsconf, clang-tidy, clang-format"
+	printf "  %-*s - %s\n" "$W" "dev-tools-vscode-configuration <lang>" "VSCode Configuration Manager."
+	printf "  %-*s - %s\n" "$W" "dev-tools-clang-toml-configuration" "clang configuration copy"
+	printf "  %-*s - %s\n" "$W" "dev-tools-py-env-init" "Python VENV"
 
 	# ==== SYSTEM & INIT ====
 	echo ""
-	printf "  %-35s - %s\n" "dev-tools-default_init-system" "Build default"
-	printf "  %-35s - %s\n" "dev-tools-install-sys" "Updating system packages and installing dependencies"
-	printf "  %-35s - %s\n" "dev-tools-vscode-sync-extension" "unpacking extensions VScode"
-	printf "  %-35s - %s\n" "dev-tools-build-cpp" "run script-build for cpp"
-	printf "  %-35s - %s\n" "dev-tools-vim-configuration" "update configuration vim in $HOME"
-	printf "  %-35s - %s\n" "dev-tools-init-ssh" "Init config for SSH"
+	printf "  %-*s - %s\n" "$W" "dev-tools-default_init-system" "Build default"
+	printf "  %-*s - %s\n" "$W" "dev-tools-install-sys" "Updating system packages and installing dependencies"
+	printf "  %-*s - %s\n" "$W" "dev-tools-vscode-sync-extension" "unpacking extensions VScode"
+	printf "  %-*s - %s\n" "$W" "dev-tools-build-cpp" "run script-build for cpp"
+	printf "  %-*s - %s\n" "$W" "dev-tools-vim-configuration" "update configuration vim in $HOME"
+	printf "  %-*s - %s\n" "$W" "dev-tools-init-ssh" "Init config for SSH"
+
+	# ==== BUILD SYSTEM (CMAKE) ====
+	echo ""
+	printf "  %-*s - %s\n" "$W" "dev-tools-cmake-conf <debug|release>" "Configure CMake with build_env settings"
+	printf "  %-*s - %s\n" "$W" "dev-tools-cmake-build <debug|release>" "Compile project (auto-conf if dir missing)"
+	printf "  %-*s - %s\n" "$W" "dev-tools-cmake-rebuild <debug|release>" "Clean build directories and compile again"
+	printf "  %-*s - %s\n" "$W" "dev-tools-gtest-run <debug|release>" "Run GTest suite via ctest"
+	printf "  %-*s - %s\n" "$W" "dev-tools-cmake-clean" "Remove build-debug and build-release"
 }

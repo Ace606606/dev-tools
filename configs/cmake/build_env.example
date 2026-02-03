@@ -1,0 +1,8 @@
+# Флаги для всех типов сборок
+COMMON_ARGS="-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+
+# Специфичные флаги для Debug
+DEBUG_ARGS="-DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON"
+
+# Специфичные флаги для Release
+RELEASE_ARGS="-DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=ON"

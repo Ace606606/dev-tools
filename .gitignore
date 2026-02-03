@@ -1,4 +1,5 @@
 configs/ssh/hosts.map
+configs/cmake/build_env
 
 */dst/
 */bash/
