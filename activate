@@ -108,7 +108,7 @@ dev-tools-install-sys() {
 		curl
 		wget
 		openssh-client
-		shfmt
+		#shfmt
 		valgrind
 		# python3 python3-pip python3-venv
 		# libprotobuf-dev libgrpc++-dev libgrpc-dev libprotoc-dev
@@ -192,7 +192,13 @@ dev-tools-tidy() {
 	if [ -z "$1" ]; then
 		FILES=$(find . -maxdepth 1 -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h")
 	else
-		FILES="$@"
+		if [ -d "$1" ]; then
+			# Если это директория — ищем файлы внутри неё
+			FILES=$(find "$1" -maxdepth 1 -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h")
+		else
+			# Если это не директория, считаем, что это список файлов (или маска типа *.cpp)
+			FILES="$@"
+		fi
 	fi
 
 	if [ -z "$FILES" ]; then

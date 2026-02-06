@@ -1,13 +1,21 @@
-# .clangd (минимальный, рабочий)
-CompileFlags:
-  Add: 
-    - -std=c++20
-    - -Wall
-    - -Wextra
-    - -Wpedantic
-    - -Werror
-    # Включаем статический анализатор
-    - -Xclang
-    - -analyze
-    - -Xclang
-    - -analyzer-checker=core.NullDereference
+Diagnostics:
+  # Подсвечивает серым неиспользуемые #include. 
+  UnusedIncludes: Strict
+
+  ClangTidy:
+    Add: [
+      # Запрещает опасное приведение типов (бинарный перенос памяти).
+      cppcoreguidelines-pro-type-reinterpret-cast,
+
+      # Запрещает "числа из ниоткуда" (напр. 404, 1024) без именованных констант.
+      readability-magic-numbers,
+
+      # Подсказывает вешать [[nodiscard]] на функции, возвращающие результат.
+      modernize-use-nodiscard,
+
+      # Следит за "запутанностью" кода (вложенные циклы, ветвления).
+      readability-function-cognitive-complexity,
+
+      # Предупреждает, если в функции идут подряд аргументы одного типа (int a, int b).
+      bugprone-easily-swappable-parameters
+    ]
