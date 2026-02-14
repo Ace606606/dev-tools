@@ -494,44 +494,44 @@ dev-tools-py-check() {
 # ============================
 
 dev-tools-cmake-conf() {
-    local TYPE=${1:-debug}
-    local DIR="build-${TYPE}"
-    local ENV_CONFIG="$CONFIG_ROOT/configs/cmake/build_env"
-    
-    [ -f "$ENV_CONFIG" ] && source "$ENV_CONFIG"
+	local TYPE=${1:-debug}
+	local DIR="build-${TYPE}"
+	local ENV_CONFIG="$CONFIG_ROOT/configs/cmake/build_env"
 
-    local CMD_ARGS="$COMMON_ARGS"
-    if [ "$TYPE" == "release" ]; then
-        CMD_ARGS="$CMD_ARGS $RELEASE_ARGS"
-    else
-        CMD_ARGS="$CMD_ARGS $DEBUG_ARGS"
-    fi
+	[ -f "$ENV_CONFIG" ] && source "$ENV_CONFIG"
 
-    [[ ! $CMD_ARGS =~ "CMAKE_BUILD_TYPE" ]] && CMD_ARGS="$CMD_ARGS -DCMAKE_BUILD_TYPE=${TYPE^}"
-    [[ ! $CMD_ARGS =~ "CMAKE_EXPORT_COMPILE_COMMANDS" ]] && CMD_ARGS="$CMD_ARGS -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+	local CMD_ARGS="$COMMON_ARGS"
+	if [ "$TYPE" == "release" ]; then
+		CMD_ARGS="$CMD_ARGS $RELEASE_ARGS"
+	else
+		CMD_ARGS="$CMD_ARGS $DEBUG_ARGS"
+	fi
 
-    echo "--> Configuring $TYPE in $DIR..."
-    echo "--> Full args: $CMD_ARGS"
-    cmake -B "$DIR" $CMD_ARGS
+	[[ ! $CMD_ARGS =~ "CMAKE_BUILD_TYPE" ]] && CMD_ARGS="$CMD_ARGS -DCMAKE_BUILD_TYPE=${TYPE^}"
+	[[ ! $CMD_ARGS =~ "CMAKE_EXPORT_COMPILE_COMMANDS" ]] && CMD_ARGS="$CMD_ARGS -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+
+	echo "--> Configuring $TYPE in $DIR..."
+	echo "--> Full args: $CMD_ARGS"
+	cmake -B "$DIR" $CMD_ARGS
 }
 
 dev-tools-cmake-build() {
-    local TYPE=${1:-debug}
-    local DIR="build-${TYPE}"
+	local TYPE=${1:-debug}
+	local DIR="build-${TYPE}"
 
-    if [ ! -d "$DIR" ]; then
-        echo "--> Directory $DIR not found. Running config..."
-	   echo "$TYPE"
-        dev-tools-cmake-conf "$TYPE" || return 1
-    fi
+	if [ ! -d "$DIR" ]; then
+		echo "--> Directory $DIR not found. Running config..."
+		echo "$TYPE"
+		dev-tools-cmake-conf "$TYPE" || return 1
+	fi
 
-    echo "--> Compiling $TYPE..."
-    cmake --build "$DIR" -j$(nproc)
+	echo "--> Compiling $TYPE..."
+	cmake --build "$DIR" -j$(nproc)
 }
 
 dev-tools-cmake-rebuild() {
-    dev-tools-cmake-clean
-    dev-tools-cmake-build "$@"
+	dev-tools-cmake-clean
+	dev-tools-cmake-build "$@"
 }
 
 dev-tools-gtest-run() {
