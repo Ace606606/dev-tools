@@ -34,7 +34,7 @@ code --install-extension streetsidesoftware.code-spell-checker-russian
 code --install-extension mkhl.shfmt         # Shell
 code --install-extension redhat.vscode-yaml # YAML
 code --install-extension redhat.vscode-xml  # XML
-
+# download shellcheck for bash
 # docker
 code --install-extension ms-azuretools.vscode-docker
 

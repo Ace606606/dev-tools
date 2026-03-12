@@ -36,7 +36,10 @@
           }
      },
      "[shellscript]": {
-          "editor.defaultFormatter": "mkhl.shfmt"
+          "editor.defaultFormatter": "mkhl.shfmt",
+          "editor.tabSize": 2,
+          "editor.insertSpaces": true,
+          "editor.formatOnSave": true
      },
      "[yaml]": {
           "editor.defaultFormatter": "redhat.vscode-yaml"
