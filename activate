@@ -613,6 +613,97 @@ dev-tools-srv-run() {
   (source "${VENV_ACTIVATE}" && python3 -m uploadserver "${port}" --bind "${ip}")
 }
 
+dev-tools-linux() {
+  local cmd=$1
+  local arg=$2
+
+  case "$cmd" in
+  # Чекнуть порт: dev-tools-linux port 8000
+  port)
+    [[ -z "$arg" ]] && {
+      echo "Usage: dev-tools-linux port <number>"
+      return 1
+    }
+    echo "--> Checking port $arg..."
+    sudo lsof -i :"$arg" || echo "Port $arg is free."
+    ;;
+
+  # Файлы процесса: dev-tools-linux files <PID>
+  files)
+    [[ -z "$arg" ]] && {
+      echo "Usage: dev-tools-linux files <PID>"
+      return 1
+    }
+    echo "--> Files opened by PID $arg:"
+    lsof -p "$arg"
+    ;;
+
+  # Ресурсы процесса: dev-tools-linux proc <name_or_pid>
+  proc)
+    [[ -z "$arg" ]] && {
+      echo "Usage: dev-tools-linux proc <name|PID>"
+      return 1
+    }
+    ps -fp "$arg" 2>/dev/null || ps aux | grep -i "$arg" | grep -v grep
+    ;;
+
+  # Топ тяжелых файлов в текущей папке: dev-tools-linux disk
+  disk)
+    echo "--> TOP 5 Largest Directories (Current depth):"
+    du -hd 1 . 2>/dev/null | sort -rh | head -n 5
+
+    echo -e "\n--> TOP 10 Largest Files (Recursive):"
+    find . -type f -not -path '*/.*' -exec du -h {} + 2>/dev/null | sort -rh | head -n 10
+    ;;
+
+  # Сетевая активность: dev-tools-linux net
+  net)
+    echo "--> Established network connections:"
+    ss -tunap | head -n 1
+    ss -tunap
+    ;;
+
+  *)
+    echo "Usage: dev-tools-linux {port <number>|files <PID>|proc <name|PID>|disk|net}"
+    return 1
+    ;;
+  esac
+}
+
+dev-tools-cpp-impact() {
+  local TARGET=$1
+  local DEPTH=${2:-1}
+
+  [[ -z "$TARGET" ]] && {
+    echo "Usage: dev-tools-cpp-impact <file.h> [depth]"
+    return 1
+  }
+
+  local REPO_ROOT
+  REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+  local OUT_DIR="${REPO_ROOT}/docs/graphs/impact"
+  mkdir -p "$OUT_DIR"
+
+  local DOT_FILE="$OUT_DIR/impact.dot"
+  local SVG_FILE="$OUT_DIR/impact.svg"
+
+  echo "--> Analyzing impact for: $TARGET (Depth: $DEPTH)"
+  python3 "$CONFIG_ROOT/scripts/py/cpp_impact.py" "$REPO_ROOT" "$TARGET" "$DEPTH" >"$DOT_FILE"
+
+  if [[ ! -s "$DOT_FILE" ]]; then
+    echo "No dependencies found for '$TARGET' at depth $DEPTH."
+    return 0
+  fi
+
+  if dot -Tsvg "$DOT_FILE" -o "$SVG_FILE"; then
+    echo "Done: $SVG_FILE"
+  fi
+
+  if command -v xdg-open >/dev/null; then
+    xdg-open "$SVG_FILE" &>/dev/null &
+  fi
+}
+
 # ============================
 #       INFO
 # ============================
@@ -673,4 +764,6 @@ dev-tools-info() {
   # ==== FEATURES ====
   echo ""
   printf "  %-*s - %s\n" "$W" "dev-tools-srv-run [50000] [127.0.0.1]" "Run HTTP server with Upload (Safe: 127.0.0.1:50000 by default)"
+  printf "  %-*s - %s\n" "$W" "dev-tools-linux" "{port|files|proc|disk|net}"
+  printf "  %-*s - %s\n" "$W" "dev-tools-cpp-impact" "Create graph depends for .hpp"
 }
