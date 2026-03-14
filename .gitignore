@@ -4,6 +4,7 @@ configs/cmake/build_env
 */dst/
 */bash/
 *.log
+.venv
 
 # Prerequisites
 *.d

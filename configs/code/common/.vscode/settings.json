@@ -41,6 +41,7 @@
           "editor.insertSpaces": true,
           "editor.formatOnSave": true
      },
+     "shfmt.executableArgs": ["-i", "2"],
      "[yaml]": {
           "editor.defaultFormatter": "redhat.vscode-yaml"
      },

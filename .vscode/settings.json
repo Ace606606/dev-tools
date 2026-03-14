@@ -22,22 +22,26 @@
      // ============================
      "[cpp]": {
           "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-          "editor.formatOnSave": false
+          "editor.formatOnSave": true
      },
      "[c]": {
           "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-          "editor.formatOnSave": false
+          "editor.formatOnSave": true
      },
      "[python]": {
           "editor.defaultFormatter": "ms-python.black-formatter",
-          "editor.formatOnSave": false,
+          "editor.formatOnSave": true,
           "editor.codeActionsOnSave": {
                "source.organizeImports": "always" // isort
           }
      },
      "[shellscript]": {
-          "editor.defaultFormatter": "mkhl.shfmt"
+          "editor.defaultFormatter": "mkhl.shfmt",
+          "editor.tabSize": 2,
+          "editor.insertSpaces": true,
+          "editor.formatOnSave": true
      },
+     "shfmt.executableArgs": ["-i", "2"],
      "[yaml]": {
           "editor.defaultFormatter": "redhat.vscode-yaml"
      },
@@ -49,6 +53,7 @@
      // ============================
      "clangd.path": "clangd",
      "clangd.arguments": [
+          "--compile-commands-dir=${workspaceFolder}/build-debug",
           "--background-index",
           "--clang-tidy",
           "--clang-tidy-checks=*",
@@ -118,19 +123,11 @@
           "json": true
      },
      "cSpell.words": [
-          "debugpy",
           "dylib",
           "gruntfuggly",
-          "Isort",
-          "libgrpc",
-          "libprotobuf",
-          "libprotoc",
-          "lldb",
           "mkhl",
-          "Mypy",
-          "pyproject",
           "smod",
-          "toplevel",
-          "vsconf"
+          "lrsdk",
+          "lrcli"
      ]
 }
