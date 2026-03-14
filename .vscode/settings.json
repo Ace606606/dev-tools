@@ -123,11 +123,18 @@
           "json": true
      },
      "cSpell.words": [
+          "debugpy",
           "dylib",
           "gruntfuggly",
-          "mkhl",
-          "smod",
+          "Isort",
+          "LOCAL_CONF",
+          "lrcli",
           "lrsdk",
-          "lrcli"
+          "mkhl",
+          "Mypy",
+          "pyproject",
+          "REQS",
+          "smod",
+          "toplevel"
      ]
 }

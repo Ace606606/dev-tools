@@ -1,0 +1,9 @@
+# Python Tools & Formatters
+black
+isort
+flake8
+mypy
+debugpy
+flake8-pyproject
+# Features
+uploadserver

@@ -35,11 +35,27 @@ dev-tools-clang-toml-configuration() {
 }
 
 dev-tools-py-env-init() {
-  python3.9 -m venv .venv
-  source ./.venv/bin/activate
-  pip install --upgrade pip
-  pip install black mypy flake8 isort debugpy flake8-pyproject
-  echo "Python VENV ready with Black, Mypy, Flake8 and Isort."
+  local VENV_DIR="${CONFIG_ROOT}/.venv"
+  local REQS="${CONFIG_ROOT}/configs/py/requirements.txt"
+
+  if [[ ! -f "${REQS}" ]]; then
+    echo "Error: ${REQS} not found"
+    return 1
+  fi
+
+  echo "--> Initializing shared Python environment in ${VENV_DIR}..."
+  python3.9 -m venv "${VENV_DIR}"
+
+  # shellcheck source=/dev/null
+  source "${VENV_DIR}/bin/activate"
+
+  if pip install --upgrade pip && pip install -r "${REQS}"; then
+    echo "--> All dependencies installed successfully!"
+    deactivate
+  else
+    echo "Error: INstallation failed"
+    return 1
+  fi
 }
 
 # ============================
@@ -175,6 +191,7 @@ dev-tools-default_init-system() {
   dev-tools-build-cpp
   dev-tools-vim-configuration
   dev-tools-init-ssh
+  dev-tools-py-env-init
 }
 
 # ============================
@@ -447,45 +464,66 @@ dev-tools-sandbox-asan() {
 dev-tools-py-fix() {
   local TARGET=${1:-"."}
   local LOCAL_CONFIG="$CONFIG_ROOT/configs/py/pyproject.toml"
+  local PY_BIN
 
-  if [ -d ".venv" ]; then
-    local TEAM_CONFIG
-    TEAM_CONFIG=$(git rev-parse --show-toplevel 2>/dev/null | xargs -I {} find {} -maxdepth 2 -name "pyproject.toml" | head -n 1)
-
-    if [ -n "$TEAM_CONFIG" ]; then
-      echo "--> Formatting with TEAM config: $TEAM_CONFIG"
-      ./.venv/bin/black "$TARGET"
-      ./.venv/bin/isort "$TARGET"
-    else
-      echo "--> Formatting with LOCAL config."
-      ./.venv/bin/black --config "$LOCAL_CONFIG" "$TARGET"
-      ./.venv/bin/isort --settings-path "$LOCAL_CONFIG" "$TARGET"
-    fi
+  if [[ -d ".venv" ]]; then
+    echo "--> Using TEAM venv (./.venv)"
+    PY_BIN="./.venv/bin"
   else
-    echo "Error: .venv not found."
+    echo "--> Using TOOLS venv (${CONFIG_ROOT}/.venv)"
+    PY_BIN="${CONFIG_ROOT}/.venv/bin"
+  fi
+
+  if [[ ! -x "${PY_BIN}/black" || ! -x "${PY_BIN}/isort" ]]; then
+    echo "Error: Python tools (black/isort) not found in ${PY_BIN}."
+    [[ "${PY_BIN}" == "${CONFIG_ROOT}/.venv/bin" ]] && echo "Hint: Run 'dev-tools-py-env-init' to prepare the shared environment."
+    return 1
+  fi
+
+  local TEAM_CONFIG
+  TEAM_CONFIG=$(git rev-parse --show-toplevel 2>/dev/null | xargs -I {} find {} -maxdepth 2 -name "pyproject.toml" | head -n 1)
+
+  if [[ -n "$TEAM_CONFIG" ]]; then
+    echo "--> Formatting with TEAM config: $TEAM_CONFIG"
+    "${PY_BIN}/black" "$TARGET"
+    "${PY_BIN}/isort" "$TARGET"
+  else
+    echo "--> Formatting with LOCAL config: $LOCAL_CONFIG"
+    "${PY_BIN}/black" --config "$LOCAL_CONFIG" "$TARGET"
+    "${PY_BIN}/isort" --settings-path "$LOCAL_CONFIG" "$TARGET"
   fi
 }
 
 dev-tools-py-check() {
   local TARGET=${1:-"."}
   local LOCAL_CONFIG="$CONFIG_ROOT/configs/py/pyproject.toml"
+  local PY_BIN
 
-  if [ -d ".venv" ]; then
-    local TEAM_CONFIG
-    TEAM_CONFIG=$(git rev-parse --show-toplevel 2>/dev/null | xargs -I {} find {} -maxdepth 2 -name "pyproject.toml" | head -n 1)
-
-    echo "Checking $TARGET..."
-    if [ -n "$TEAM_CONFIG" ]; then
-      echo "--> Using TEAM config: $TEAM_CONFIG"
-      ./.venv/bin/flake8 "$TARGET" --extend-exclude=.venv
-      ./.venv/bin/mypy "$TARGET" --exclude ".venv"
-    else
-      echo "--> Using LOCAL config."
-      ./.venv/bin/flake8 "$TARGET" --extend-exclude=.venv
-      ./.venv/bin/mypy --config-file "$LOCAL_CONFIG" "$TARGET" --exclude ".venv"
-    fi
+  if [[ -d ".venv" ]]; then
+    echo "--> Checking with TEAM venv"
+    PY_BIN="./.venv/bin"
   else
-    echo "Error: .venv not found."
+    echo "--> Checking with TOOLS venv"
+    PY_BIN="${CONFIG_ROOT}/.venv/bin"
+  fi
+
+  if [[ ! -x "${PY_BIN}/flake8" || ! -x "${PY_BIN}/mypy" ]]; then
+    echo "Error: Python tools (flake8/mypy) not found in ${PY_BIN}."
+    [[ "${PY_BIN}" == "${CONFIG_ROOT}/.venv/bin" ]] && echo "Hint: Run 'dev-tools-py-env-init' to prepare the shared environment."
+    return 1
+  fi
+
+  local TEAM_CONFIG
+  TEAM_CONFIG=$(git rev-parse --show-toplevel 2>/dev/null | xargs -I {} find {} -maxdepth 2 -name "pyproject.toml" | head -n 1)
+
+  if [[ -n "$TEAM_CONFIG" ]]; then
+    echo "--> Using TEAM config: $TEAM_CONFIG"
+    "${PY_BIN}/flake8" "$TARGET" --extend-exclude=.venv
+    "${PY_BIN}/mypy" "$TARGET" --exclude ".venv"
+  else
+    echo "--> Using LOCAL config: $LOCAL_CONFIG"
+    "${PY_BIN}/flake8" "$TARGET" --extend-exclude=.venv
+    "${PY_BIN}/mypy" --config-file "$LOCAL_CONFIG" "$TARGET" --exclude ".venv"
   fi
 }
 
@@ -557,14 +595,23 @@ dev-tools-cmake-clean() {
 #       FEATURES
 # ============================
 
-# dev-tools() {
-#   local port
-#   local ip
+dev-tools-srv-run() {
+  local VENV_ACTIVATE="${CONFIG_ROOT}/.venv/bin/activate"
+  local port=${1:-50000}
+  local ip=${2:-"127.0.0.1"}
 
-#   if [[  ]]
-#     python3 -m http.client
-#   fi
-# }
+  echo "================================================="
+  echo "  SERVER ACTIVE AT: http://$ip:$port"
+  echo "  TO UPLOAD FILES:  http://$ip:$port/upload"
+  echo "================================================="
+
+  if [[ ! -f "${VENV_ACTIVATE}" ]]; then
+    echo "Error: Shared venv not found. Run 'dev-tools-venv-init' first."
+    return 1
+  fi
+  # shellcheck source=/dev/null
+  (source "${VENV_ACTIVATE}" && python3 -m uploadserver "${port}" --bind "${ip}")
+}
 
 # ============================
 #       INFO
@@ -601,7 +648,7 @@ dev-tools-info() {
 
   # CONFIGURATION
   echo ""
-  printf "  %-*s - %s\n" "$W" "dev-tools-default-init-conf" "Copy .vsconf, clang-tidy, clang-format"
+  printf "  %-*s - %s\n" "$W" "dev-tools-default-init-conf" "Copy .vsconf, clang-tidy, clang-format, .toml"
   printf "  %-*s - %s\n" "$W" "dev-tools-vscode-configuration <lang>" "VSCode Configuration Manager."
   printf "  %-*s - %s\n" "$W" "dev-tools-clang-toml-configuration" "clang configuration copy"
   printf "  %-*s - %s\n" "$W" "dev-tools-py-env-init" "Python VENV"
@@ -624,5 +671,6 @@ dev-tools-info() {
   printf "  %-*s - %s\n" "$W" "dev-tools-cmake-clean" "Remove build-debug and build-release"
 
   # ==== FEATURES ====
-  printf "  %-*s - %s\n" "$W" "dev-tools" ""
+  echo ""
+  printf "  %-*s - %s\n" "$W" "dev-tools-srv-run [50000] [127.0.0.1]" "Run HTTP server with Upload (Safe: 127.0.0.1:50000 by default)"
 }
