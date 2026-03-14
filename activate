@@ -704,6 +704,42 @@ dev-tools-cpp-impact() {
   fi
 }
 
+dev-tools-git-who-broke-it() {
+  local FILE=$1
+  local LINE=$2
+
+  if [[ -z "${FILE}" || -z "${LINE}" ]]; then
+    echo "Usage: dev-tools-git-who-it <file> <line_number>"
+    return 1
+  fi
+
+  if [[ -z "${FILE}" ]]; then
+    echo "Error: file '${FILE}' not found"
+    return 1
+  fi
+
+  local BLAME_INFO
+  if ! BLAME_INFO=$(git blame -L "${LINE}","${LINE}" --porcelain "${FILE}" 2>/dev/null); then
+    echo "Error: could not find line ${LINE} in ${FILE} (maybe file is not in git?)"
+    return 1
+  fi
+
+  local COMMIT_HASH
+  local AUTHOR
+  local DATE
+  COMMIT_HASH=$(echo "$BLAME_INFO" | head -n 1 | awk '{print $1}')
+  AUTHOR=$(echo "$BLAME_INFO" | grep "^author " | cut -d' ' -f2-)
+  DATE=$(echo "$BLAME_INFO" | grep "^author-time " | cut -d' ' -f2-)
+
+  local FORM_DATE
+  FORM_DATE=$(date -d @"$DATE" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$DATE" "+%Y-%m-%d %H:%M")
+
+  echo -e "\e[1;31mCommit:\e[0m $COMMIT_HASH"
+  echo -e "\e[1;32mAuthor:\e[0m $AUTHOR ($FORM_DATE)"
+  echo -e "\e[1;34mMessage:\e[0m"
+  git log -1 --pretty=%B "$COMMIT_HASH" | sed 's/^/  /'
+}
+
 # ============================
 #       INFO
 # ============================
@@ -766,4 +802,5 @@ dev-tools-info() {
   printf "  %-*s - %s\n" "$W" "dev-tools-srv-run [50000] [127.0.0.1]" "Run HTTP server with Upload (Safe: 127.0.0.1:50000 by default)"
   printf "  %-*s - %s\n" "$W" "dev-tools-linux" "{port|files|proc|disk|net}"
   printf "  %-*s - %s\n" "$W" "dev-tools-cpp-impact" "Create graph depends for .hpp"
+  printf "  %-*s - %s\n" "$W" "dev-tools-git-who-broke-it" ""
 }

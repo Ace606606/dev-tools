@@ -131,6 +131,7 @@
         "fontcolor",
         "fontname",
         "fontsize",
+        "git",
         "graphviz",
         "gruntfuggly",
         "Isort",
