@@ -126,6 +126,7 @@ dev-tools-install-sys() {
     openssh-client
     #shfmt
     valgrind
+    graphviz
     # python3 python3-pip python3-venv
     # libprotobuf-dev libgrpc++-dev libgrpc-dev libprotoc-dev
   )
@@ -287,7 +288,8 @@ dev-tools-cpp-check() {
     cppcheck --project=build/compile_commands.json $COMMON_FLAGS
   else
     echo "--> Manual scan mode"
-    local ALL_HEADER_DIRS=$(find . -type f \( -name "*.h" -o -name "*.hpp" \) -exec dirname {} + | sort -u | xargs -I {} echo -n "-I {} ")
+    local ALL_HEADER_DIRS
+    ALL_HEADER_DIRS=$(find . -type f \( -name "*.h" -o -name "*.hpp" \) -exec dirname {} + | sort -u | xargs -I {} echo -n "-I {} ")
 
     cppcheck $COMMON_FLAGS --inconclusive --std=c++17 \
       $ALL_HEADER_DIRS "$TARGET"
@@ -372,7 +374,7 @@ dev-tools-sandbox-build() {
   local OBJS=""
   if [ -d "$BUILD_DIR" ]; then
     echo "--> Linking with objects from $BUILD_DIR (excluding all mains)"
-    # Мы исключаем любые файлы, в пути которых есть "main.cpp.o" или "main.o"
+    # Исключаем любые файлы, в пути которых есть "main.cpp.o" или "main.o"
     OBJS=$(find "$BUILD_DIR" -name "*.o" | grep -vE "/main\.(cpp|c)?\.o$")
   fi
 
@@ -802,5 +804,5 @@ dev-tools-info() {
   printf "  %-*s - %s\n" "$W" "dev-tools-srv-run [50000] [127.0.0.1]" "Run HTTP server with Upload (Safe: 127.0.0.1:50000 by default)"
   printf "  %-*s - %s\n" "$W" "dev-tools-linux" "{port|files|proc|disk|net}"
   printf "  %-*s - %s\n" "$W" "dev-tools-cpp-impact" "Create graph depends for .hpp"
-  printf "  %-*s - %s\n" "$W" "dev-tools-git-who-broke-it" ""
+  printf "  %-*s - %s\n" "$W" "dev-tools-git-who-broke-it" "information commit"
 }
