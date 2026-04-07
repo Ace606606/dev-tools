@@ -80,10 +80,20 @@
      "mypy-type-checker.args": [
           "--config-file=${workspaceFolder}/pyproject.toml"
      ],
+     // карта поиска модулей. default = {workspaceFolder}
+     "python.analysis.extraPaths": [
+        "${workspaceFolder}/src"
+     ],
+     // поиск по символам и автодополнение для тех файлов, которые ты еще не открыты в редакторе
+     "python.analysis.indexing": true,
      //"flake8.args": ["--config=${workspaceFolder}/pyproject.toml"],
      "black-formatter.args": [
           "--config=${workspaceFolder}/pyproject.toml"
      ],
+     "flake8.args": [
+          "--config=${workspaceFolder}/sdk/pyproject.toml"
+     ],
+     "flake8.importStrategy": "fromEnvironment",
      // ============================
      //          CPP (Интеграция)
      // ============================
